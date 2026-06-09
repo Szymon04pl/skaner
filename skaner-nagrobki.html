@@ -203,6 +203,68 @@
     <p>Zdjęcia → GPS + OCR → Twoja baza danych</p>
   </div>
 
+  <!-- ── INSTRUKCJA API ────────────────────────────────────── -->
+  <div class="card" id="apiGuide">
+    <div class="card-title">
+      <span>🔑 Klucz Google Vision API</span>
+      <button onclick="document.getElementById('apiGuide').classList.add('hidden')" style="background:none;border:none;color:var(--text2);cursor:pointer;font-size:18px" title="Zamknij">✕</button>
+    </div>
+
+    <div id="apiStatus" style="padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:14px;text-align:center"></div>
+
+    <details open style="margin-bottom:12px">
+      <summary style="font-size:14px;font-weight:600;cursor:pointer;color:var(--text);margin-bottom:10px">
+        📋 Jak uzyskać klucz API (krok po kroku)
+      </summary>
+
+      <ol style="font-size:13px;color:var(--text2);padding-left:20px;line-height:1.8">
+        <li>Wejdź na <a href="https://console.cloud.google.com/" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">console.cloud.google.com</a></li>
+        <li>Zaloguj się kontem Google (możesz użyć zwykłego Gmail)</li>
+        <li>Kliknij <b style="color:var(--text)">„Select a project"</b> (górny pasek) → <b style="color:var(--text)">„New Project"</b><br>
+          <span style="font-size:12px">Nazwa dowolna, np. <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">nagrobki-ocr</code></span></li>
+        <li>Po stworzeniu projektu przejdź do: <b style="color:var(--text)">APIs & Services → Library</b></li>
+        <li>Wyszukaj <b style="color:var(--text)">„Cloud Vision API"</b> i kliknij <b style="color:var(--text)">„Enable"</b></li>
+        <li>Przejdź do: <b style="color:var(--text)">APIs & Services → Credentials</b></li>
+        <li>Kliknij <b style="color:var(--text)">„+ Create Credentials" → „API key"</b></li>
+        <li>Skopiuj wygenerowany klucz (wygląda jak: <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:11px">AIzaSy...</code>)</li>
+      </ol>
+    </details>
+
+    <details style="margin-bottom:12px">
+      <summary style="font-size:14px;font-weight:600;cursor:pointer;color:var(--text);margin-bottom:10px">
+        💰 Koszty i limity
+      </summary>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7">
+        <p>• <b style="color:var(--success)">Pierwsze 1000 zapytań/miesiąc</b> — za darmo!</p>
+        <p>• Powyżej: ~$1.50 za 1000 zdjęć</p>
+        <p>• Nowe konto Google Cloud dostaje <b style="color:var(--text)">$300 darmowych kredytów</b> na 90 dni</p>
+        <p style="margin-top:6px">💡 Dla typowego użytku (kilkaset nagrobków/miesiąc) — <b style="color:var(--success)">całkowicie za darmo</b></p>
+      </div>
+    </details>
+
+    <details style="margin-bottom:14px">
+      <summary style="font-size:14px;font-weight:600;cursor:pointer;color:var(--text);margin-bottom:10px">
+        🔒 Zabezpieczenie klucza (opcjonalne)
+      </summary>
+      <div style="font-size:13px;color:var(--text2);line-height:1.7">
+        <p>W <b style="color:var(--text)">Credentials</b> → kliknij swój klucz → <b style="color:var(--text)">„Restrict key"</b>:</p>
+        <p>• <b style="color:var(--text)">Application restrictions</b> → „HTTP referrers" → dodaj adres tej strony</p>
+        <p>• <b style="color:var(--text)">API restrictions</b> → „Restrict key" → wybierz tylko „Cloud Vision API"</p>
+      </div>
+    </details>
+
+    <div style="border-top:1px solid var(--border);padding-top:14px">
+      <label style="display:block;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px">Wklej klucz API tutaj:</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="apiKeyInput" placeholder="AIzaSy..." style="flex:1;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:monospace;font-size:14px;outline:none">
+        <button class="btn btn-primary" onclick="saveApiKey()" style="width:auto;padding:12px 20px;font-size:14px">
+          💾 Zapisz
+        </button>
+      </div>
+      <p style="font-size:11px;color:var(--text2);margin-top:8px">🔐 Klucz zapisze się w pamięci przeglądarki (localStorage) — nie musisz go wklejać ponownie</p>
+    </div>
+  </div>
+
   <!-- ── ZDJĘCIA ─────────────────────────────────────────── -->
   <div class="card">
     <div class="card-title">
@@ -309,9 +371,39 @@
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  KONFIGURACJA                                                     ║
 // ╚══════════════════════════════════════════════════════════════════╝
-const GOOGLE_VISION_API_KEY = "TUTAJ_WKLEJ_KLUCZ_API";
+var GOOGLE_VISION_API_KEY = localStorage.getItem("GOOGLE_VISION_API_KEY") || "TUTAJ_WKLEJ_KLUCZ_API";
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVqkv-4-YJNC5UihGVzGcW2BaQ0J9z4XcySKglc2BFVEz1VCvVNRQEjhL17jK8nSo/exec";
-const HAS_VISION_KEY = GOOGLE_VISION_API_KEY !== "TUTAJ_WKLEJ_KLUCZ_API";
+var HAS_VISION_KEY = GOOGLE_VISION_API_KEY !== "TUTAJ_WKLEJ_KLUCZ_API";
+
+function updateApiStatus() {
+  var el = document.getElementById("apiStatus");
+  var inp = document.getElementById("apiKeyInput");
+  if (HAS_VISION_KEY) {
+    el.style.background = "var(--success-bg)";
+    el.style.border = "1px solid var(--success)";
+    el.style.color = "var(--success)";
+    el.textContent = "✅ Klucz API aktywny — OCR włączony";
+    if (inp) inp.value = GOOGLE_VISION_API_KEY.slice(0, 10) + "..." + GOOGLE_VISION_API_KEY.slice(-4);
+  } else {
+    el.style.background = "var(--error-bg)";
+    el.style.border = "1px solid var(--error)";
+    el.style.color = "var(--error)";
+    el.textContent = "❌ Brak klucza — OCR wyłączony (dane trzeba wpisać ręcznie)";
+  }
+}
+
+function saveApiKey() {
+  var key = document.getElementById("apiKeyInput").value.trim();
+  if (!key || key.length < 10) { showToast("Wklej prawidłowy klucz API", "error"); return; }
+  localStorage.setItem("GOOGLE_VISION_API_KEY", key);
+  GOOGLE_VISION_API_KEY = key;
+  HAS_VISION_KEY = true;
+  updateApiStatus();
+  showToast("✅ Klucz zapisany! OCR gotowy do użycia", "success");
+}
+
+// Inicjalizuj status po załadowaniu strony
+document.addEventListener("DOMContentLoaded", updateApiStatus);
 
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  STAN — każde zdjęcie przechowuje data URL (nie blob!)            ║
