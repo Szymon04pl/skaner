@@ -16,136 +16,105 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #0a0a0a;
-    --surface: #1a1a1a;
-    --surface2: #252525;
-    --border: #333;
-    --text: #f5f5f5;
-    --text2: #999;
-    --accent: #3b82f6;
-    --accent-hover: #2563eb;
-    --success: #22c55e;
-    --success-bg: #052e16;
-    --error: #ef4444;
-    --error-bg: #450a0a;
-    --warning: #f59e0b;
-    --radius: 16px;
-    --radius-sm: 12px;
+    --bg: #0a0a0a; --surface: #1a1a1a; --surface2: #252525;
+    --border: #333; --text: #f5f5f5; --text2: #999;
+    --accent: #3b82f6; --accent-hover: #2563eb;
+    --success: #22c55e; --success-bg: #052e16;
+    --error: #ef4444; --error-bg: #450a0a;
+    --warning: #f59e0b; --radius: 16px; --radius-sm: 12px;
   }
 
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100dvh;
-    -webkit-font-smoothing: antialiased;
+    background: var(--bg); color: var(--text);
+    min-height: 100dvh; -webkit-font-smoothing: antialiased;
   }
 
   .app {
-    max-width: 480px;
-    margin: 0 auto;
+    max-width: 480px; margin: 0 auto;
     padding: 16px 16px 32px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+    display: flex; flex-direction: column; gap: 16px;
   }
 
   .header { text-align: center; padding: 20px 0 8px; }
-  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .header h1 { font-size: 22px; font-weight: 700; }
   .header p { color: var(--text2); font-size: 13px; margin-top: 4px; }
 
   .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
   }
   .card-title {
     font-size: 13px; font-weight: 600; text-transform: uppercase;
     letter-spacing: 0.5px; color: var(--text2); margin-bottom: 14px;
     display: flex; align-items: center; justify-content: space-between;
   }
-  .card-title .count {
-    font-size: 12px; color: var(--accent); text-transform: none; letter-spacing: 0;
-  }
 
   /* ── DROP ZONE ──────────────────────────────────────────── */
   .drop-zone {
-    border: 2px dashed var(--border);
-    border-radius: var(--radius-sm);
-    padding: 40px 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
+    border: 2px dashed var(--border); border-radius: var(--radius-sm);
+    padding: 40px 20px; text-align: center;
+    cursor: pointer; transition: all 0.2s;
   }
   .drop-zone.drag-over {
-    border-color: var(--accent);
-    background: rgba(59,130,246,0.08);
+    border-color: var(--accent); background: rgba(59,130,246,0.08);
   }
-  .drop-zone .icon { font-size: 48px; margin-bottom: 12px; }
+  .drop-zone .dz-icon { font-size: 48px; margin-bottom: 12px; }
   .drop-zone p { color: var(--text2); font-size: 14px; }
   .drop-zone small { color: var(--text2); font-size: 12px; opacity: 0.7; }
-  .drop-zone input[type="file"] {
-    position: absolute; inset: 0; opacity: 0; cursor: pointer;
-  }
 
   /* ── PHOTOS GRID ────────────────────────────────────────── */
   .photos-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-bottom: 12px;
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 8px; margin-bottom: 12px;
   }
-  .photo-thumb {
-    position: relative;
-    aspect-ratio: 1;
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    background: var(--surface2);
+  .photo-item {
+    position: relative; width: 100%; padding-bottom: 100%; /* 1:1 */
+    border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--border); background: var(--surface2);
   }
-  .photo-thumb img {
-    width: 100%; height: 100%;
-    object-fit: cover; display: block;
+  .photo-item img {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%; object-fit: cover;
   }
-  .photo-thumb .badge {
+  .photo-item .p-badge {
     position: absolute; top: 4px; left: 4px;
     background: rgba(0,0,0,0.75); color: #fff;
     font-size: 10px; font-weight: 600;
     padding: 2px 6px; border-radius: 6px;
+    z-index: 2;
   }
-  .photo-thumb .del-btn {
+  .photo-item .p-del {
     position: absolute; top: 4px; right: 4px;
     width: 26px; height: 26px; border-radius: 50%;
     background: rgba(239,68,68,0.9); color: #fff;
-    border: none; font-size: 16px; line-height: 1;
+    border: none; font-size: 15px; line-height: 1;
     cursor: pointer; display: flex;
     align-items: center; justify-content: center;
+    z-index: 2;
   }
-  .photo-thumb .status-bar {
+  .photo-item .p-status {
     position: absolute; bottom: 0; left: 0; right: 0;
-    padding: 3px 6px; font-size: 10px; font-weight: 600; text-align: center;
+    padding: 3px 6px; font-size: 10px; font-weight: 600;
+    text-align: center; z-index: 2;
   }
-  .status-bar.processing { background: rgba(245,158,11,0.9); color: #000; }
-  .status-bar.done { background: rgba(34,197,94,0.85); color: #fff; }
-  .status-bar.err { background: rgba(239,68,68,0.85); color: #fff; }
+  .p-status.s-proc { background: rgba(245,158,11,0.9); color: #000; }
+  .p-status.s-done { background: rgba(34,197,94,0.85); color: #fff; }
+  .p-status.s-err  { background: rgba(239,68,68,0.85); color: #fff; }
 
-  .add-more {
-    aspect-ratio: 1;
-    border: 2px dashed var(--border);
-    border-radius: 10px;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
+  .add-tile {
+    position: relative; width: 100%; padding-bottom: 100%;
+    border: 2px dashed var(--border); border-radius: 10px;
     cursor: pointer; transition: border-color 0.2s;
-    position: relative; gap: 4px;
   }
-  .add-more:hover { border-color: var(--accent); }
-  .add-more .plus { font-size: 28px; line-height: 1; }
-  .add-more span { font-size: 11px; color: var(--text2); }
-  .add-more input[type="file"] {
-    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+  .add-tile:hover { border-color: var(--accent); }
+  .add-tile-inner {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
   }
+  .add-tile-inner .at-plus { font-size: 28px; line-height: 1; color: var(--text); }
+  .add-tile-inner span { font-size: 11px; color: var(--text2); }
 
   /* ── BUTTONS ────────────────────────────────────────────── */
   .btn {
@@ -161,8 +130,6 @@
   .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
   .btn-success { background: var(--success); color: #fff; }
   .btn-success:hover:not(:disabled) { background: #16a34a; }
-  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
-  .btn-outline:hover:not(:disabled) { background: var(--surface2); }
 
   /* ── STEPS ──────────────────────────────────────────────── */
   .steps { display: flex; flex-direction: column; gap: 10px; }
@@ -207,6 +174,7 @@
     padding: 14px 24px; border-radius: var(--radius-sm);
     font-size: 14px; font-weight: 600; z-index: 9999;
     opacity: 0; transition: all 0.3s ease; white-space: nowrap;
+    max-width: 90vw; text-align: center;
   }
   .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
   .toast.success { background: var(--success); color: #fff; }
@@ -229,7 +197,7 @@
 </head>
 <body>
 
-<div class="app" id="app">
+<div class="app">
 
   <div class="header">
     <h1>📸 Skaner Nagrobków</h1>
@@ -237,30 +205,31 @@
   </div>
 
   <!-- ── ZDJĘCIA ─────────────────────────────────────────── -->
-  <div class="card" id="photoCard">
+  <div class="card">
     <div class="card-title">
       <span>📷 Zdjęcia nagrobka</span>
-      <span class="count hidden" id="countLabel"></span>
+      <span id="countLabel" style="font-size:12px;color:var(--accent);text-transform:none;letter-spacing:0"></span>
     </div>
 
-    <!-- Drop zone (widoczna gdy brak zdjęć) -->
-    <div class="drop-zone" id="dropZone">
-      <div class="icon">📷</div>
+    <!-- Drop zone -->
+    <div class="drop-zone" id="dropZone" onclick="fileInput.click()">
+      <div class="dz-icon">📷</div>
       <p>Dotknij aby zrobić zdjęcie<br>lub przeciągnij zdjęcia tutaj</p>
       <small>Możesz dodać wiele zdjęć naraz</small>
-      <input type="file" id="mainFileInput" accept="image/*" capture="environment" multiple>
     </div>
 
-    <!-- Siatka zdjęć (widoczna gdy są zdjęcia) -->
-    <div id="gridContainer" class="hidden">
-      <div class="photos-grid" id="grid"></div>
-    </div>
+    <!-- Siatka miniaturek -->
+    <div class="photos-grid hidden" id="photosGrid"></div>
 
-    <!-- Przycisk WYŚLIJ (po dodaniu zdjęć) -->
+    <!-- Przycisk START -->
     <button class="btn btn-primary hidden" id="btnStart" style="margin-top:12px" onclick="startProcessing()">
       🚀 Przetwórz i wyślij
     </button>
   </div>
+
+  <!-- Ukryty input file -->
+  <input type="file" id="fileInput" accept="image/*" capture="environment" multiple
+         style="display:none" onchange="handleFileInput(this)">
 
   <!-- ── STATUS ──────────────────────────────────────────── -->
   <div class="card hidden" id="statusCard">
@@ -341,219 +310,220 @@
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  KONFIGURACJA                                                     ║
 // ╚══════════════════════════════════════════════════════════════════╝
-
-// Google Cloud Vision API Key
-// Jak uzyskać: https://console.cloud.google.com → włącz "Cloud Vision API" → Credentials → API Key
-// Jeśli nie masz klucza — aplikacja nadal działa (GPS + ręczne wpisywanie), OCR jest pominięty.
 const GOOGLE_VISION_API_KEY = "TUTAJ_WKLEJ_KLUCZ_API";
-
-// Google Apps Script URL — TEN SAM co w aplikacji mapy (ta sama baza!)
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVqkv-4-YJNC5UihGVzGcW2BaQ0J9z4XcySKglc2BFVEz1VCvVNRQEjhL17jK8nSo/exec";
-
 const HAS_VISION_KEY = GOOGLE_VISION_API_KEY !== "TUTAJ_WKLEJ_KLUCZ_API";
 
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  STAN — każde zdjęcie przechowuje data URL (nie blob!)            ║
+// ╚══════════════════════════════════════════════════════════════════╝
+// { id, file, dataUrl, status: "new"|"processing"|"done"|"error" }
+var photos = [];
+var nextId = 0;
 
 // ╔══════════════════════════════════════════════════════════════════╗
-// ║  STAN                                                             ║
+// ║  DRAG & DROP — cała strona                                       ║
 // ╚══════════════════════════════════════════════════════════════════╝
-let photos = []; // { id, file, thumbUrl, status }
-let photoId = 0;
-
-// DOM
-const dropZone      = document.getElementById("dropZone");
-const mainFileInput = document.getElementById("mainFileInput");
-const gridContainer = document.getElementById("gridContainer");
-const grid          = document.getElementById("grid");
-const countLabel    = document.getElementById("countLabel");
-const btnStart      = document.getElementById("btnStart");
-const statusCard    = document.getElementById("statusCard");
-const formCard      = document.getElementById("formCard");
-const ocrNote       = document.getElementById("ocrNote");
-const ocrDetails    = document.getElementById("ocrDetails");
-const rawOcrText    = document.getElementById("rawOcrText");
-const toastEl       = document.getElementById("toast");
-const btnSend       = document.getElementById("btnSend");
-
-const fImie = document.getElementById("fImie");
-const fNazwisko = document.getElementById("fNazwisko");
-const fDaty = document.getElementById("fDaty");
-const fLat = document.getElementById("fLat");
-const fLng = document.getElementById("fLng");
-const fInfo = document.getElementById("fInfo");
-
-
-// ╔══════════════════════════════════════════════════════════════════╗
-// ║  DRAG & DROP z PC                                                 ║
-// ╚══════════════════════════════════════════════════════════════════╝
-
-// Cała strona jako drop target
-document.addEventListener("dragover", (e) => {
-  e.preventDefault();
-  dropZone.classList.add("drag-over");
-});
-document.addEventListener("dragleave", (e) => {
-  if (!e.relatedTarget || e.relatedTarget === document.documentElement) {
-    dropZone.classList.remove("drag-over");
+document.addEventListener("dragover", function(e) { e.preventDefault(); e.stopPropagation(); document.getElementById("dropZone").classList.add("drag-over"); });
+document.addEventListener("dragleave", function(e) { e.preventDefault(); document.getElementById("dropZone").classList.remove("drag-over"); });
+document.addEventListener("drop", function(e) {
+  e.preventDefault(); e.stopPropagation();
+  document.getElementById("dropZone").classList.remove("drag-over");
+  var files = [];
+  for (var i = 0; i < e.dataTransfer.files.length; i++) {
+    if (e.dataTransfer.files[i].type.indexOf("image") === 0) files.push(e.dataTransfer.files[i]);
   }
-});
-document.addEventListener("drop", (e) => {
-  e.preventDefault();
-  dropZone.classList.remove("drag-over");
-  const files = [...e.dataTransfer.files].filter(f => f.type.startsWith("image/"));
   if (files.length) addFiles(files);
 });
 
-// Click / file input
-mainFileInput.addEventListener("change", function() {
-  if (this.files.length) addFiles([...this.files]);
-  this.value = "";
-});
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  FILE INPUT                                                       ║
+// ╚══════════════════════════════════════════════════════════════════╝
+function handleFileInput(input) {
+  var files = [];
+  for (var i = 0; i < input.files.length; i++) files.push(input.files[i]);
+  if (files.length) addFiles(files);
+  input.value = "";
+}
 
+function openFilePicker() {
+  document.getElementById("fileInput").click();
+}
 
 // ╔══════════════════════════════════════════════════════════════════╗
-// ║  ZARZĄDZANIE ZDJĘCIAMI                                            ║
+// ║  DODAWANIE ZDJĘĆ — konwersja na data URL + render                 ║
 // ╚══════════════════════════════════════════════════════════════════╝
-
 function addFiles(files) {
-  for (const f of files) {
-    photos.push({
-      id: ++photoId,
-      file: f,
-      thumbUrl: URL.createObjectURL(f),
-      status: "new",
-    });
-  }
-  render();
+  var pending = files.length;
+  files.forEach(function(file) {
+    var reader = new FileReader();
+    var id = ++nextId;
+    reader.onload = function(e) {
+      photos.push({ id: id, file: file, dataUrl: e.target.result, status: "new" });
+      pending--;
+      if (pending <= 0) renderGrid();
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function removePhoto(id) {
-  const p = photos.find(x => x.id === id);
-  if (p) URL.revokeObjectURL(p.thumbUrl);
-  photos = photos.filter(x => x.id !== id);
-  render();
+  photos = photos.filter(function(p) { return p.id !== id; });
+  renderGrid();
   if (photos.length === 0) {
-    formCard.classList.add("hidden");
-    statusCard.classList.add("hidden");
+    document.getElementById("formCard").classList.add("hidden");
+    document.getElementById("statusCard").classList.add("hidden");
   }
 }
 
-function render() {
-  // Pusta vs niepusta
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  RENDER — buduj DOM ręcznie (nie innerHTML!)                      ║
+// ╚══════════════════════════════════════════════════════════════════╝
+function renderGrid() {
+  var gridEl = document.getElementById("photosGrid");
+  var dropEl = document.getElementById("dropZone");
+  var countEl = document.getElementById("countLabel");
+  var btnEl = document.getElementById("btnStart");
+
   if (photos.length === 0) {
-    dropZone.classList.remove("hidden");
-    gridContainer.classList.add("hidden");
-    countLabel.classList.add("hidden");
-    btnStart.classList.add("hidden");
+    dropEl.classList.remove("hidden");
+    gridEl.classList.add("hidden");
+    countEl.textContent = "";
+    btnEl.classList.add("hidden");
     return;
   }
 
-  dropZone.classList.add("hidden");
-  gridContainer.classList.remove("hidden");
-  countLabel.classList.remove("hidden");
-  btnStart.classList.remove("hidden");
-  countLabel.textContent = photos.length + " zdjęć";
+  dropEl.classList.add("hidden");
+  gridEl.classList.remove("hidden");
+  btnEl.classList.remove("hidden");
+  countEl.textContent = photos.length + " zdjęć";
 
-  // Buduj HTML siatki
-  let html = "";
-  photos.forEach((p, i) => {
-    let statusHtml = "";
-    if (p.status === "processing") statusHtml = '<div class="status-bar processing">OCR...</div>';
-    else if (p.status === "done") statusHtml = '<div class="status-bar done">✓</div>';
-    else if (p.status === "error") statusHtml = '<div class="status-bar err">✗</div>';
+  // Czyść siatkę
+  while (gridEl.firstChild) gridEl.removeChild(gridEl.firstChild);
 
-    html += `
-      <div class="photo-thumb">
-        <img src="${p.thumbUrl}" alt="Zdjęcie ${i+1}">
-        <div class="badge">#${i+1}</div>
-        <button class="del-btn" onclick="removePhoto(${p.id})" title="Usuń zdjęcie">✕</button>
-        ${statusHtml}
-      </div>
-    `;
+  // Twórz miniaturki jako prawdziwe elementy DOM
+  photos.forEach(function(p, idx) {
+    var wrapper = document.createElement("div");
+    wrapper.className = "photo-item";
+
+    // Obrazek
+    var img = document.createElement("img");
+    img.src = p.dataUrl;
+    img.alt = "Zdjęcie " + (idx + 1);
+    wrapper.appendChild(img);
+
+    // Badge z numerem
+    var badge = document.createElement("div");
+    badge.className = "p-badge";
+    badge.textContent = "#" + (idx + 1);
+    wrapper.appendChild(badge);
+
+    // Przycisk usuwania
+    var del = document.createElement("button");
+    del.className = "p-del";
+    del.textContent = "✕";
+    del.title = "Usuń zdjęcie";
+    del.setAttribute("data-id", p.id);
+    del.onclick = function() { removePhoto(p.id); };
+    wrapper.appendChild(del);
+
+    // Status bar
+    if (p.status === "processing") {
+      var st = document.createElement("div");
+      st.className = "p-status s-proc";
+      st.textContent = "OCR...";
+      wrapper.appendChild(st);
+    } else if (p.status === "done") {
+      var st2 = document.createElement("div");
+      st2.className = "p-status s-done";
+      st2.textContent = "✓ OK";
+      wrapper.appendChild(st2);
+    } else if (p.status === "error") {
+      var st3 = document.createElement("div");
+      st3.className = "p-status s-err";
+      st3.textContent = "✗";
+      wrapper.appendChild(st3);
+    }
+
+    gridEl.appendChild(wrapper);
   });
 
-  // Przycisk "+" do dodawania kolejnych
-  html += `
-    <div class="add-more">
-      <div class="plus">＋</div>
-      <span>Dodaj</span>
-      <input type="file" accept="image/*" multiple onchange="addFiles([...this.files]); this.value='';">
-    </div>
-  `;
+  // Kafelek "Dodaj +"
+  var addTile = document.createElement("div");
+  addTile.className = "add-tile";
+  addTile.onclick = openFilePicker;
 
-  grid.innerHTML = html;
+  var addInner = document.createElement("div");
+  addInner.className = "add-tile-inner";
+
+  var plus = document.createElement("div");
+  plus.className = "at-plus";
+  plus.textContent = "＋";
+  addInner.appendChild(plus);
+
+  var addLabel = document.createElement("span");
+  addLabel.textContent = "Dodaj";
+  addInner.appendChild(addLabel);
+
+  addTile.appendChild(addInner);
+  gridEl.appendChild(addTile);
 }
-
 
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  HELPERS                                                          ║
 // ╚══════════════════════════════════════════════════════════════════╝
-
 function showToast(msg, type) {
-  toastEl.textContent = msg;
-  toastEl.className = "toast " + type + " show";
-  setTimeout(() => { toastEl.className = "toast"; }, 3500);
+  var t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast " + type + " show";
+  setTimeout(function() { t.className = "toast"; }, 3500);
 }
 
 function setStep(id, state, text) {
-  const el = document.getElementById(id);
-  const icon = document.getElementById(id + "Icon");
-  const txt = document.getElementById(id + "Text");
-  el.className = "step " + state;
-  if (text) txt.textContent = text;
+  document.getElementById(id).className = "step " + state;
+  if (text) document.getElementById(id + "Text").textContent = text;
+  var icon = document.getElementById(id + "Icon");
   if (state === "active") icon.innerHTML = '<div class="spinner"></div>';
   else if (state === "done") icon.textContent = "✓";
   else if (state === "error") icon.textContent = "✗";
 }
 
 function resetSteps() {
-  ["stepGps","stepOcr","stepReady"].forEach((id, i) => {
-    const el = document.getElementById(id);
-    const icon = document.getElementById(id + "Icon");
-    el.className = "step";
-    icon.textContent = String(i + 1);
+  ["stepGps","stepOcr","stepReady"].forEach(function(id, i) {
+    document.getElementById(id).className = "step";
+    document.getElementById(id + "Icon").textContent = String(i + 1);
   });
   document.getElementById("stepGpsText").textContent = "Odczytuję GPS z EXIF...";
   document.getElementById("stepOcrText").textContent = "Analizuję tekst (OCR)...";
   document.getElementById("stepReadyText").textContent = "Gotowe do zapisu";
 }
 
-function fileToBase64(file) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = () => res(r.result);
-    r.onerror = rej;
-    r.readAsDataURL(file);
-  });
-}
-
-
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  EXIF GPS                                                         ║
 // ╚══════════════════════════════════════════════════════════════════╝
-
 function dmsToDecimal(dms, ref) {
   if (!dms || dms.length < 3) return null;
-  let dec = dms[0] + dms[1] / 60 + dms[2] / 3600;
+  var dec = dms[0] + dms[1] / 60 + dms[2] / 3600;
   if (ref === "S" || ref === "W") dec = -dec;
   return parseFloat(dec.toFixed(6));
 }
 
 function readExifGps(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
+  return new Promise(function(resolve) {
+    var reader = new FileReader();
     reader.onload = function(e) {
-      const img = new Image();
+      var img = new Image();
       img.onload = function() {
         try {
           EXIF.getData(img, function() {
-            const latD = EXIF.getTag(this, "GPSLatitude");
-            const latR = EXIF.getTag(this, "GPSLatitudeRef");
-            const lngD = EXIF.getTag(this, "GPSLongitude");
-            const lngR = EXIF.getTag(this, "GPSLongitudeRef");
+            var latD = EXIF.getTag(this, "GPSLatitude");
+            var latR = EXIF.getTag(this, "GPSLatitudeRef");
+            var lngD = EXIF.getTag(this, "GPSLongitude");
+            var lngR = EXIF.getTag(this, "GPSLongitudeRef");
             if (latD && lngD) resolve({ lat: dmsToDecimal(latD, latR), lng: dmsToDecimal(lngD, lngR) });
             else resolve(null);
           });
-        } catch { resolve(null); }
+        } catch(ex) { resolve(null); }
       };
       img.src = e.target.result;
     };
@@ -561,209 +531,213 @@ function readExifGps(file) {
   });
 }
 
-
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  GOOGLE CLOUD VISION OCR                                          ║
 // ╚══════════════════════════════════════════════════════════════════╝
-
-async function runOcr(base64) {
-  const clean = base64.replace(/^data:image\/[^;]+;base64,/, "");
-  const url = `https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`;
-  const res = await fetch(url, {
+function runOcr(base64) {
+  var clean = base64.replace(/^data:image\/[^;]+;base64,/, "");
+  var url = "https://vision.googleapis.com/v1/images:annotate?key=" + GOOGLE_VISION_API_KEY;
+  return fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       requests: [{ image: { content: clean }, features: [{ type: "TEXT_DETECTION", maxResults: 1 }] }],
     }),
+  }).then(function(res) {
+    if (!res.ok) throw new Error("Vision API " + res.status);
+    return res.json();
+  }).then(function(data) {
+    var ann = data.responses && data.responses[0] && data.responses[0].textAnnotations;
+    return (ann && ann[0] && ann[0].description) || "";
   });
-  if (!res.ok) throw new Error("Vision API " + res.status);
-  const data = await res.json();
-  return data.responses?.[0]?.textAnnotations?.[0]?.description || "";
 }
-
 
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  CZYSZCZENIE TEKSTU                                               ║
 // ╚══════════════════════════════════════════════════════════════════╝
-
-const TRASH = [
+var TRASH = [
   /ś\.?\s*p\.?/gi, /zmarł[aey]?\.?/gi, /zm\s*\./gi, /żył[aey]?\s+lat/gi,
   /a\s*†\s*o/gi, /pamięci/gi, /prosi\s*(o\s*)?modlitwę/gi,
   /requiescat\s+in\s+pace/gi, /r\.?\s*i\.?\s*p\.?/gi,
   /spoczywaj\s+w\s+pokoju/gi, /tu\s+spoczywa/gi, /grób\s+rodzinny/gi,
   /pokój\s+(jej|jego|ich)\s+duszy/gi, /cześć\s+ich\s+pamięci/gi,
-  /[†✝✞⸸☦]/g, /
-{3,}/g,
+  /[†✝✞⸸☦]/g
 ];
 
 function cleanText(raw) {
-  let t = raw;
-  for (const re of TRASH) t = t.replace(re, " ");
+  var t = raw;
+  TRASH.forEach(function(re) { t = t.replace(re, " "); });
   return t.replace(/[ \t]+/g, " ").trim();
 }
 
 function parseData(cleaned) {
-  const r = { imie: "", nazwisko: "", daty: "" };
-  const pats = [
-    /(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4})\s*[-–—]\s*(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4})/g,
+  var r = { imie: "", nazwisko: "", daty: "" };
+  var pats = [
+    /(\d{1,2}[.\-\/]\d{1,2}[.\-\/]\d{4})\s*[-–—]\s*(\d{1,2}[.\-\/]\d{1,2}[.\-\/]\d{4})/g,
     /(\d{4})\s*[-–—]\s*(\d{4})/g,
-    /\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4}/g,
+    /\d{1,2}[.\-\/]\d{1,2}[.\-\/]\d{4}/g,
     /\b(1[89]\d{2}|20[0-2]\d)\b/g,
   ];
-  let dates = [], rest = cleaned;
-  for (const p of pats) {
-    const m = cleaned.match(p);
-    if (m) { dates.push(...m); for (const x of m) rest = rest.replace(x, " "); }
-  }
-  r.daty = [...new Set(dates)].join(" – ");
-  const words = rest.replace(/[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s-]/g, " ").split(/\s+/)
-    .filter(w => w.length >= 2 && /^[A-ZĄĆĘŁŃÓŚŹŻ]/.test(w));
+  var dates = [], rest = cleaned;
+  pats.forEach(function(p) {
+    var m = cleaned.match(p);
+    if (m) { dates = dates.concat(m); m.forEach(function(x) { rest = rest.replace(x, " "); }); }
+  });
+  r.daty = dates.filter(function(v,i,a) { return a.indexOf(v)===i; }).join(" – ");
+  var words = rest.replace(/[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s-]/g, " ").split(/\s+/)
+    .filter(function(w) { return w.length >= 2 && /^[A-ZĄĆĘŁŃÓŚŹŻ]/.test(w); });
   if (words.length >= 2) { r.imie = words[0]; r.nazwisko = words.slice(1).join(" "); }
   else if (words.length === 1) r.nazwisko = words[0];
   return r;
 }
 
-
 // ╔══════════════════════════════════════════════════════════════════╗
-// ║  GŁÓWNY FLOW — przycisk "Przetwórz i wyślij"                     ║
+// ║  GŁÓWNY FLOW                                                      ║
 // ╚══════════════════════════════════════════════════════════════════╝
-
 async function startProcessing() {
   if (!photos.length) return;
 
-  btnStart.disabled = true;
-  btnStart.textContent = "⏳ Przetwarzam...";
-  formCard.classList.add("hidden");
-  statusCard.classList.remove("hidden");
+  var btn = document.getElementById("btnStart");
+  btn.disabled = true;
+  btn.textContent = "⏳ Przetwarzam...";
+  document.getElementById("formCard").classList.add("hidden");
+  document.getElementById("statusCard").classList.remove("hidden");
   resetSteps();
 
-  // ── 1. GPS ────────────────────────────────────────────────────
+  // 1. GPS
   setStep("stepGps", "active");
-  let gps = null;
-  for (const p of photos) {
-    const g = await readExifGps(p.file);
+  var gps = null;
+  for (var i = 0; i < photos.length; i++) {
+    var g = await readExifGps(photos[i].file);
     if (g && !gps) gps = g;
   }
   if (gps) {
-    fLat.value = gps.lat; fLng.value = gps.lng;
-    setStep("stepGps", "done", `GPS: ${gps.lat}, ${gps.lng}`);
+    document.getElementById("fLat").value = gps.lat;
+    document.getElementById("fLng").value = gps.lng;
+    setStep("stepGps", "done", "GPS: " + gps.lat + ", " + gps.lng);
   } else {
-    fLat.value = ""; fLng.value = "";
+    document.getElementById("fLat").value = "";
+    document.getElementById("fLng").value = "";
     setStep("stepGps", "error", "Brak GPS — wpisz ręcznie");
   }
 
-  // ── 2. OCR ────────────────────────────────────────────────────
+  // 2. OCR
   if (!HAS_VISION_KEY) {
     setStep("stepOcr", "done", "OCR pominięty (brak klucza API)");
-    ocrNote.classList.remove("hidden");
-    ocrDetails.classList.add("hidden");
-    fImie.value = ""; fNazwisko.value = ""; fDaty.value = "";
+    document.getElementById("ocrNote").classList.remove("hidden");
+    document.getElementById("ocrDetails").classList.add("hidden");
+    document.getElementById("fImie").value = "";
+    document.getElementById("fNazwisko").value = "";
+    document.getElementById("fDaty").value = "";
   } else {
-    ocrNote.classList.add("hidden");
-    ocrDetails.classList.remove("hidden");
+    document.getElementById("ocrNote").classList.add("hidden");
+    document.getElementById("ocrDetails").classList.remove("hidden");
     setStep("stepOcr", "active");
 
-    let allTexts = [];
-    for (let i = 0; i < photos.length; i++) {
-      const p = photos[i];
-      p.status = "processing"; render();
-      setStep("stepOcr", "active", `OCR zdjęcie ${i+1}/${photos.length}...`);
+    var allTexts = [];
+    for (var j = 0; j < photos.length; j++) {
+      photos[j].status = "processing";
+      renderGrid();
+      setStep("stepOcr", "active", "OCR zdjęcie " + (j+1) + "/" + photos.length + "...");
       try {
-        const b64 = await fileToBase64(p.file);
-        const txt = await runOcr(b64);
-        p.status = "done";
+        var txt = await runOcr(photos[j].dataUrl);
+        photos[j].status = "done";
         if (txt) allTexts.push(txt);
-      } catch (e) {
+      } catch(e) {
         console.error(e);
-        p.status = "error";
+        photos[j].status = "error";
       }
-      render();
+      renderGrid();
     }
 
     if (allTexts.length) {
-      rawOcrText.textContent = allTexts.join("\n\n---\n\n");
-      const combined = cleanText(allTexts.join("\n"));
-      const parsed = parseData(combined);
-      fImie.value = parsed.imie;
-      fNazwisko.value = parsed.nazwisko;
-      fDaty.value = parsed.daty;
-      setStep("stepOcr", "done", `Tekst z ${allTexts.length}/${photos.length} zdjęć`);
+      document.getElementById("rawOcrText").textContent = allTexts.join("\n\n---\n\n");
+      var combined = cleanText(allTexts.join("\n"));
+      var parsed = parseData(combined);
+      document.getElementById("fImie").value = parsed.imie;
+      document.getElementById("fNazwisko").value = parsed.nazwisko;
+      document.getElementById("fDaty").value = parsed.daty;
+      setStep("stepOcr", "done", "Tekst z " + allTexts.length + "/" + photos.length + " zdjęć");
     } else {
-      rawOcrText.textContent = "(brak tekstu)";
-      fImie.value = ""; fNazwisko.value = ""; fDaty.value = "";
+      document.getElementById("rawOcrText").textContent = "(brak tekstu)";
+      document.getElementById("fImie").value = "";
+      document.getElementById("fNazwisko").value = "";
+      document.getElementById("fDaty").value = "";
       setStep("stepOcr", "error", "Nie rozpoznano tekstu");
     }
   }
 
-  // ── 3. Gotowe ─────────────────────────────────────────────────
+  // 3. Gotowe
   setStep("stepReady", "done", "Sprawdź dane i wyślij");
-  formCard.classList.remove("hidden");
-  fInfo.value = "";
-  btnStart.disabled = false;
-  btnStart.textContent = "🔄 Przetwórz ponownie";
+  document.getElementById("formCard").classList.remove("hidden");
+  document.getElementById("fInfo").value = "";
+  btn.disabled = false;
+  btn.textContent = "🔄 Przetwórz ponownie";
 
-  setTimeout(() => formCard.scrollIntoView({ behavior: "smooth", block: "start" }), 200);
+  setTimeout(function() {
+    document.getElementById("formCard").scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 200);
 }
-
 
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  WYSYŁKA DO GOOGLE SHEETS                                        ║
 // ╚══════════════════════════════════════════════════════════════════╝
-
 async function sendToSheets() {
-  const imie = fImie.value.trim();
-  const nazwisko = fNazwisko.value.trim();
-  const daty = fDaty.value.trim();
-  const lat = parseFloat(fLat.value);
-  const lng = parseFloat(fLng.value);
-  const info = fInfo.value.trim();
+  var imie = document.getElementById("fImie").value.trim();
+  var nazwisko = document.getElementById("fNazwisko").value.trim();
+  var daty = document.getElementById("fDaty").value.trim();
+  var lat = parseFloat(document.getElementById("fLat").value);
+  var lng = parseFloat(document.getElementById("fLng").value);
+  var info = document.getElementById("fInfo").value.trim();
 
-  if (!nazwisko) { showToast("Wpisz przynajmniej nazwisko!", "error"); fNazwisko.focus(); return; }
-  if (isNaN(lat) || isNaN(lng)) { showToast("Brak współrzędnych GPS!", "error"); fLat.focus(); return; }
+  if (!nazwisko) { showToast("Wpisz przynajmniej nazwisko!", "error"); return; }
+  if (isNaN(lat) || isNaN(lng)) { showToast("Brak współrzędnych GPS!", "error"); return; }
 
-  btnSend.disabled = true;
-  btnSend.textContent = "⏳ Wysyłam...";
+  var sendBtn = document.getElementById("btnSend");
+  sendBtn.disabled = true;
+  sendBtn.textContent = "⏳ Wysyłam...";
 
-  const name = [imie, nazwisko].filter(Boolean).join(" ");
+  var name = [imie, nazwisko].filter(Boolean).join(" ");
 
   try {
-    const res = await fetch(GOOGLE_SCRIPT_URL, {
+    var res = await fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "add",
         id: crypto.randomUUID(),
         miejsce: name + (daty ? " (" + daty + ")" : ""),
-        lat, lng,
-        url: "",
-        hash_ip: "",
-        ip: info || "",
+        lat: lat, lng: lng,
+        url: "", hash_ip: "", ip: info || "",
       }),
       redirect: "follow",
     });
 
-    let data;
-    try { data = await res.json(); } catch { data = {}; }
+    var data;
+    try { data = await res.json(); } catch(ex) { data = {}; }
     if (data.status === "error") throw new Error(data.message || "Błąd");
 
     showToast("✅ Zapisano w bazie!", "success");
 
     // Reset
-    photos.forEach(p => URL.revokeObjectURL(p.thumbUrl));
-    photos = []; photoId = 0;
-    render();
-    fImie.value = ""; fNazwisko.value = ""; fDaty.value = "";
-    fLat.value = ""; fLng.value = ""; fInfo.value = "";
-    rawOcrText.textContent = "—";
-    formCard.classList.add("hidden");
-    statusCard.classList.add("hidden");
-    btnStart.textContent = "🚀 Przetwórz i wyślij";
+    photos = []; nextId = 0;
+    renderGrid();
+    document.getElementById("fImie").value = "";
+    document.getElementById("fNazwisko").value = "";
+    document.getElementById("fDaty").value = "";
+    document.getElementById("fLat").value = "";
+    document.getElementById("fLng").value = "";
+    document.getElementById("fInfo").value = "";
+    document.getElementById("rawOcrText").textContent = "—";
+    document.getElementById("formCard").classList.add("hidden");
+    document.getElementById("statusCard").classList.add("hidden");
+    document.getElementById("btnStart").textContent = "🚀 Przetwórz i wyślij";
     window.scrollTo({ top: 0, behavior: "smooth" });
-  } catch (err) {
+  } catch(err) {
     showToast("❌ " + (err.message || "Spróbuj ponownie"), "error");
   } finally {
-    btnSend.disabled = false;
-    btnSend.textContent = "📤 WYŚLIJ DO BAZY";
+    sendBtn.disabled = false;
+    sendBtn.textContent = "📤 WYŚLIJ DO BAZY";
   }
 }
 </script>
