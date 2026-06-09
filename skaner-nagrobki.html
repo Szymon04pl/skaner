@@ -5,21 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>📸 Skaner Nagrobków</title>
 
-<!-- ═══════════════════════════════════════════════════════════════
-  SKANER NAGROBKÓW — Zdjęcia → EXIF GPS → OCR → Google Sheets
-
-  KONFIGURACJA:
-  1. Wklej swój klucz Google Cloud Vision API poniżej (GOOGLE_VISION_API_KEY)
-  2. Wklej swój link Google Apps Script (GOOGLE_SCRIPT_URL)
-     → To TEN SAM link co w aplikacji mapy — dane trafiają do tej samej bazy!
-
-  Jak uzyskać klucz Google Vision:
-  → https://console.cloud.google.com
-  → Włącz "Cloud Vision API"
-  → Credentials → Create API Key
-═══════════════════════════════════════════════════════════════ -->
-
-<!-- EXIF.js z CDN — odczyt GPS z metadanych zdjęcia -->
+<!-- EXIF.js z CDN -->
 <script src="https://cdn.jsdelivr.net/npm/exif-js@2.3.0/exif.min.js"></script>
 
 <!-- Google Fonts: Inter -->
@@ -64,14 +50,10 @@
     gap: 16px;
   }
 
-  .header {
-    text-align: center;
-    padding: 20px 0 8px;
-  }
+  .header { text-align: center; padding: 20px 0 8px; }
   .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
   .header p { color: var(--text2); font-size: 13px; margin-top: 4px; }
 
-  /* ── CARD ────────────────────────────────────────────────── */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -79,18 +61,36 @@
     padding: 20px;
   }
   .card-title {
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text2);
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    font-size: 13px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text2); margin-bottom: 14px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title .count {
+    font-size: 12px; color: var(--accent); text-transform: none; letter-spacing: 0;
   }
 
-  /* ── PHOTO GALLERY ──────────────────────────────────────── */
+  /* ── DROP ZONE ──────────────────────────────────────────── */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(59,130,246,0.08);
+  }
+  .drop-zone .icon { font-size: 48px; margin-bottom: 12px; }
+  .drop-zone p { color: var(--text2); font-size: 14px; }
+  .drop-zone small { color: var(--text2); font-size: 12px; opacity: 0.7; }
+  .drop-zone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+  }
+
+  /* ── PHOTOS GRID ────────────────────────────────────────── */
   .photos-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -103,140 +103,56 @@
     border-radius: 10px;
     overflow: hidden;
     border: 1px solid var(--border);
+    background: var(--surface2);
   }
   .photo-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+    width: 100%; height: 100%;
+    object-fit: cover; display: block;
   }
-  .photo-thumb .photo-badge {
-    position: absolute;
-    top: 4px;
-    left: 4px;
-    background: rgba(0,0,0,0.7);
-    color: #fff;
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 6px;
+  .photo-thumb .badge {
+    position: absolute; top: 4px; left: 4px;
+    background: rgba(0,0,0,0.75); color: #fff;
+    font-size: 10px; font-weight: 600;
+    padding: 2px 6px; border-radius: 6px;
   }
-  .photo-thumb .photo-delete {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: rgba(239,68,68,0.9);
-    color: #fff;
-    border: none;
-    font-size: 14px;
-    line-height: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.15s;
+  .photo-thumb .del-btn {
+    position: absolute; top: 4px; right: 4px;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: rgba(239,68,68,0.9); color: #fff;
+    border: none; font-size: 16px; line-height: 1;
+    cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
   }
-  .photo-thumb:hover .photo-delete,
-  .photo-thumb:active .photo-delete {
-    opacity: 1;
+  .photo-thumb .status-bar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 3px 6px; font-size: 10px; font-weight: 600; text-align: center;
   }
-  /* Na mobile — zawsze widoczny */
-  @media (hover: none) {
-    .photo-thumb .photo-delete { opacity: 1; }
-  }
+  .status-bar.processing { background: rgba(245,158,11,0.9); color: #000; }
+  .status-bar.done { background: rgba(34,197,94,0.85); color: #fff; }
+  .status-bar.err { background: rgba(239,68,68,0.85); color: #fff; }
 
-  .photo-thumb .photo-status {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 3px 6px;
-    font-size: 10px;
-    font-weight: 600;
-    text-align: center;
-  }
-  .photo-status.processing {
-    background: rgba(245,158,11,0.9);
-    color: #000;
-  }
-  .photo-status.done {
-    background: rgba(34,197,94,0.85);
-    color: #fff;
-  }
-  .photo-status.error {
-    background: rgba(239,68,68,0.85);
-    color: #fff;
-  }
-
-  .add-photo-zone {
+  .add-more {
     aspect-ratio: 1;
     border: 2px dashed var(--border);
     border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: border-color 0.2s;
-    position: relative;
-    gap: 4px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    cursor: pointer; transition: border-color 0.2s;
+    position: relative; gap: 4px;
   }
-  .add-photo-zone:hover { border-color: var(--accent); }
-  .add-photo-zone .icon { font-size: 28px; }
-  .add-photo-zone span { font-size: 11px; color: var(--text2); }
-  .add-photo-zone input[type="file"] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-  }
-
-  .photo-count {
-    font-size: 13px;
-    color: var(--text2);
-    text-align: center;
-    margin-bottom: 4px;
-  }
-
-  /* ── EMPTY STATE ────────────────────────────────────────── */
-  .empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    border: 2px dashed var(--border);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: border-color 0.2s;
-    position: relative;
-  }
-  .empty-state:hover { border-color: var(--accent); }
-  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
-  .empty-state p { color: var(--text2); font-size: 14px; }
-  .empty-state input[type="file"] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
+  .add-more:hover { border-color: var(--accent); }
+  .add-more .plus { font-size: 28px; line-height: 1; }
+  .add-more span { font-size: 11px; color: var(--text2); }
+  .add-more input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
   }
 
   /* ── BUTTONS ────────────────────────────────────────────── */
   .btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
-    padding: 16px 24px;
-    border: none;
-    border-radius: var(--radius-sm);
-    font-family: inherit;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; padding: 16px 24px; border: none; border-radius: var(--radius-sm);
+    font-family: inherit; font-size: 16px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s ease;
     -webkit-tap-highlight-color: transparent;
   }
   .btn:active { transform: scale(0.97); }
@@ -248,9 +164,9 @@
   .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
   .btn-outline:hover:not(:disabled) { background: var(--surface2); }
 
-  /* ── PROGRESS STEPS ─────────────────────────────────────── */
+  /* ── STEPS ──────────────────────────────────────────────── */
   .steps { display: flex; flex-direction: column; gap: 10px; }
-  .step { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text2); transition: color 0.2s; }
+  .step { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text2); }
   .step.active { color: var(--warning); }
   .step.done { color: var(--success); }
   .step.error { color: var(--error); }
@@ -266,14 +182,12 @@
 
   @keyframes spin { to { transform: rotate(360deg); } }
   .spinner {
-    width: 14px; height: 14px;
-    border: 2px solid transparent;
-    border-top-color: var(--warning);
-    border-radius: 50%;
+    width: 14px; height: 14px; border: 2px solid transparent;
+    border-top-color: var(--warning); border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
 
-  /* ── FORM FIELDS ────────────────────────────────────────── */
+  /* ── FORM ───────────────────────────────────────────────── */
   .field { margin-bottom: 14px; }
   .field:last-child { margin-bottom: 0; }
   .field label { display: block; font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
@@ -287,7 +201,6 @@
   .field textarea { resize: vertical; min-height: 60px; }
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-  /* ── TOAST ──────────────────────────────────────────────── */
   .toast {
     position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(100px);
@@ -299,11 +212,16 @@
   .toast.success { background: var(--success); color: #fff; }
   .toast.error { background: var(--error); color: #fff; }
 
-  /* ── OCR RAW ────────────────────────────────────────────── */
   .raw-text {
     background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
     padding: 12px; font-size: 13px; color: var(--text2);
     max-height: 150px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+  }
+
+  .ocr-note {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px; font-size: 13px; color: var(--warning); text-align: center;
+    margin-bottom: 14px;
   }
 
   .hidden { display: none !important; }
@@ -311,46 +229,40 @@
 </head>
 <body>
 
-<div class="app">
+<div class="app" id="app">
 
-  <!-- ── HEADER ──────────────────────────────────────────── -->
   <div class="header">
     <h1>📸 Skaner Nagrobków</h1>
-    <p>Wiele zdjęć → GPS + OCR → Twoja baza danych</p>
+    <p>Zdjęcia → GPS + OCR → Twoja baza danych</p>
   </div>
 
   <!-- ── ZDJĘCIA ─────────────────────────────────────────── -->
-  <div class="card">
+  <div class="card" id="photoCard">
     <div class="card-title">
       <span>📷 Zdjęcia nagrobka</span>
-      <span id="photoCount" class="hidden" style="font-size:12px;color:var(--accent);text-transform:none;letter-spacing:0"></span>
+      <span class="count hidden" id="countLabel"></span>
     </div>
 
-    <!-- Pusty stan — gdy nie ma żadnych zdjęć -->
-    <div class="empty-state" id="emptyState">
+    <!-- Drop zone (widoczna gdy brak zdjęć) -->
+    <div class="drop-zone" id="dropZone">
       <div class="icon">📷</div>
-      <p>Dotknij, aby zrobić zdjęcie<br>lub wybrać z galerii</p>
-      <p style="margin-top:8px;font-size:12px;color:var(--text2)">Możesz dodać wiele zdjęć</p>
-      <input type="file" accept="image/*" capture="environment" multiple onchange="handleNewFiles(this.files)">
+      <p>Dotknij aby zrobić zdjęcie<br>lub przeciągnij zdjęcia tutaj</p>
+      <small>Możesz dodać wiele zdjęć naraz</small>
+      <input type="file" id="mainFileInput" accept="image/*" capture="environment" multiple>
     </div>
 
-    <!-- Siatka zdjęć + przycisk dodawania -->
-    <div class="photos-grid hidden" id="photosGrid">
-      <!-- Thumbnails wstawiane dynamicznie -->
-      <!-- Ostatni element: przycisk "+" -->
-      <div class="add-photo-zone" id="addPhotoBtn">
-        <div class="icon">＋</div>
-        <span>Dodaj</span>
-        <input type="file" accept="image/*" capture="environment" multiple onchange="handleNewFiles(this.files)">
-      </div>
+    <!-- Siatka zdjęć (widoczna gdy są zdjęcia) -->
+    <div id="gridContainer" class="hidden">
+      <div class="photos-grid" id="grid"></div>
     </div>
 
-    <button class="btn btn-outline hidden" id="btnProcess" onclick="processAllPhotos()" style="margin-top:12px">
-      🔍 Analizuj wszystkie zdjęcia
+    <!-- Przycisk WYŚLIJ (po dodaniu zdjęć) -->
+    <button class="btn btn-primary hidden" id="btnStart" style="margin-top:12px" onclick="startProcessing()">
+      🚀 Przetwórz i wyślij
     </button>
   </div>
 
-  <!-- ── STATUS / POSTĘP ─────────────────────────────────── -->
+  <!-- ── STATUS ──────────────────────────────────────────── -->
   <div class="card hidden" id="statusCard">
     <div class="card-title">⏳ Status przetwarzania</div>
     <div class="steps">
@@ -360,7 +272,7 @@
       </div>
       <div class="step" id="stepOcr">
         <div class="step-icon" id="stepOcrIcon">2</div>
-        <span id="stepOcrText">Analizuję tekst przez AI...</span>
+        <span id="stepOcrText">Analizuję tekst (OCR)...</span>
       </div>
       <div class="step" id="stepReady">
         <div class="step-icon" id="stepReadyIcon">3</div>
@@ -373,9 +285,13 @@
   <div class="card hidden" id="formCard">
     <div class="card-title">✏️ Sprawdź i popraw dane</div>
 
-    <details style="margin-bottom:14px">
+    <div class="ocr-note hidden" id="ocrNote">
+      ⚠️ Google Vision API nie podłączone — wpisz dane ręcznie
+    </div>
+
+    <details style="margin-bottom:14px" id="ocrDetails" class="hidden">
       <summary style="font-size:13px;color:var(--text2);cursor:pointer;margin-bottom:8px">
-        🔍 Pokaż surowy tekst OCR (ze wszystkich zdjęć)
+        🔍 Pokaż surowy tekst OCR
       </summary>
       <div class="raw-text" id="rawOcrText">—</div>
     </details>
@@ -419,73 +335,170 @@
 
 </div>
 
-<!-- ── TOAST ──────────────────────────────────────────────── -->
 <div class="toast" id="toast"></div>
 
 <script>
 // ╔══════════════════════════════════════════════════════════════════╗
-// ║  KONFIGURACJA — wklej swoje klucze poniżej                      ║
+// ║  KONFIGURACJA                                                     ║
 // ╚══════════════════════════════════════════════════════════════════╝
 
-// ── Google Cloud Vision API Key ──────────────────────────────────
-// Jak uzyskać:
-//   1. Wejdź na https://console.cloud.google.com
-//   2. Utwórz nowy projekt (lub wybierz istniejący)
-//   3. Włącz API: "Cloud Vision API"
-//   4. Przejdź do Credentials → Create Credentials → API Key
-//   5. Skopiuj klucz i wklej poniżej
+// Google Cloud Vision API Key
+// Jak uzyskać: https://console.cloud.google.com → włącz "Cloud Vision API" → Credentials → API Key
+// Jeśli nie masz klucza — aplikacja nadal działa (GPS + ręczne wpisywanie), OCR jest pominięty.
 const GOOGLE_VISION_API_KEY = "TUTAJ_WKLEJ_KLUCZ_API";
 
-// ── Google Apps Script URL ───────────────────────────────────────
-// TEN SAM link co w aplikacji mapy — dane trafiają do JEDNEJ bazy!
+// Google Apps Script URL — TEN SAM co w aplikacji mapy (ta sama baza!)
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVqkv-4-YJNC5UihGVzGcW2BaQ0J9z4XcySKglc2BFVEz1VCvVNRQEjhL17jK8nSo/exec";
 
-
-// ╔══════════════════════════════════════════════════════════════════╗
-// ║  STAN APLIKACJI — lista zdjęć                                     ║
-// ╚══════════════════════════════════════════════════════════════════╝
-
-// Każde zdjęcie: { id, file, dataUrl, base64, gps, ocrText, status }
-let photos = [];
-let nextPhotoId = 1;
+const HAS_VISION_KEY = GOOGLE_VISION_API_KEY !== "TUTAJ_WKLEJ_KLUCZ_API";
 
 
 // ╔══════════════════════════════════════════════════════════════════╗
-// ║  ELEMENTY DOM                                                     ║
+// ║  STAN                                                             ║
 // ╚══════════════════════════════════════════════════════════════════╝
-const emptyState    = document.getElementById("emptyState");
-const photosGrid    = document.getElementById("photosGrid");
-const addPhotoBtn   = document.getElementById("addPhotoBtn");
-const photoCount    = document.getElementById("photoCount");
-const btnProcess    = document.getElementById("btnProcess");
+let photos = []; // { id, file, thumbUrl, status }
+let photoId = 0;
+
+// DOM
+const dropZone      = document.getElementById("dropZone");
+const mainFileInput = document.getElementById("mainFileInput");
+const gridContainer = document.getElementById("gridContainer");
+const grid          = document.getElementById("grid");
+const countLabel    = document.getElementById("countLabel");
+const btnStart      = document.getElementById("btnStart");
 const statusCard    = document.getElementById("statusCard");
 const formCard      = document.getElementById("formCard");
+const ocrNote       = document.getElementById("ocrNote");
+const ocrDetails    = document.getElementById("ocrDetails");
 const rawOcrText    = document.getElementById("rawOcrText");
-const btnSend       = document.getElementById("btnSend");
 const toastEl       = document.getElementById("toast");
+const btnSend       = document.getElementById("btnSend");
 
-const fImie     = document.getElementById("fImie");
+const fImie = document.getElementById("fImie");
 const fNazwisko = document.getElementById("fNazwisko");
-const fDaty     = document.getElementById("fDaty");
-const fLat      = document.getElementById("fLat");
-const fLng      = document.getElementById("fLng");
-const fInfo     = document.getElementById("fInfo");
+const fDaty = document.getElementById("fDaty");
+const fLat = document.getElementById("fLat");
+const fLng = document.getElementById("fLng");
+const fInfo = document.getElementById("fInfo");
+
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  DRAG & DROP z PC                                                 ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+// Cała strona jako drop target
+document.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  dropZone.classList.add("drag-over");
+});
+document.addEventListener("dragleave", (e) => {
+  if (!e.relatedTarget || e.relatedTarget === document.documentElement) {
+    dropZone.classList.remove("drag-over");
+  }
+});
+document.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropZone.classList.remove("drag-over");
+  const files = [...e.dataTransfer.files].filter(f => f.type.startsWith("image/"));
+  if (files.length) addFiles(files);
+});
+
+// Click / file input
+mainFileInput.addEventListener("change", function() {
+  if (this.files.length) addFiles([...this.files]);
+  this.value = "";
+});
+
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  ZARZĄDZANIE ZDJĘCIAMI                                            ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+function addFiles(files) {
+  for (const f of files) {
+    photos.push({
+      id: ++photoId,
+      file: f,
+      thumbUrl: URL.createObjectURL(f),
+      status: "new",
+    });
+  }
+  render();
+}
+
+function removePhoto(id) {
+  const p = photos.find(x => x.id === id);
+  if (p) URL.revokeObjectURL(p.thumbUrl);
+  photos = photos.filter(x => x.id !== id);
+  render();
+  if (photos.length === 0) {
+    formCard.classList.add("hidden");
+    statusCard.classList.add("hidden");
+  }
+}
+
+function render() {
+  // Pusta vs niepusta
+  if (photos.length === 0) {
+    dropZone.classList.remove("hidden");
+    gridContainer.classList.add("hidden");
+    countLabel.classList.add("hidden");
+    btnStart.classList.add("hidden");
+    return;
+  }
+
+  dropZone.classList.add("hidden");
+  gridContainer.classList.remove("hidden");
+  countLabel.classList.remove("hidden");
+  btnStart.classList.remove("hidden");
+  countLabel.textContent = photos.length + " zdjęć";
+
+  // Buduj HTML siatki
+  let html = "";
+  photos.forEach((p, i) => {
+    let statusHtml = "";
+    if (p.status === "processing") statusHtml = '<div class="status-bar processing">OCR...</div>';
+    else if (p.status === "done") statusHtml = '<div class="status-bar done">✓</div>';
+    else if (p.status === "error") statusHtml = '<div class="status-bar err">✗</div>';
+
+    html += `
+      <div class="photo-thumb">
+        <img src="${p.thumbUrl}" alt="Zdjęcie ${i+1}">
+        <div class="badge">#${i+1}</div>
+        <button class="del-btn" onclick="removePhoto(${p.id})" title="Usuń zdjęcie">✕</button>
+        ${statusHtml}
+      </div>
+    `;
+  });
+
+  // Przycisk "+" do dodawania kolejnych
+  html += `
+    <div class="add-more">
+      <div class="plus">＋</div>
+      <span>Dodaj</span>
+      <input type="file" accept="image/*" multiple onchange="addFiles([...this.files]); this.value='';">
+    </div>
+  `;
+
+  grid.innerHTML = html;
+}
 
 
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  HELPERS                                                          ║
 // ╚══════════════════════════════════════════════════════════════════╝
-function showToast(msg, type = "success") {
+
+function showToast(msg, type) {
   toastEl.textContent = msg;
   toastEl.className = "toast " + type + " show";
-  setTimeout(() => { toastEl.className = "toast"; }, 3000);
+  setTimeout(() => { toastEl.className = "toast"; }, 3500);
 }
 
 function setStep(id, state, text) {
-  const step = document.getElementById(id);
+  const el = document.getElementById(id);
   const icon = document.getElementById(id + "Icon");
-  const txt  = document.getElementById(id + "Text");
-  step.className = "step " + state;
+  const txt = document.getElementById(id + "Text");
+  el.className = "step " + state;
   if (text) txt.textContent = text;
   if (state === "active") icon.innerHTML = '<div class="spinner"></div>';
   else if (state === "done") icon.textContent = "✓";
@@ -493,92 +506,23 @@ function setStep(id, state, text) {
 }
 
 function resetSteps() {
-  setStep("stepGps", "", "Odczytuję GPS z EXIF...");
-  setStep("stepOcr", "", "Analizuję tekst przez AI...");
-  setStep("stepReady", "", "Gotowe do zapisu");
-  document.getElementById("stepGpsIcon").textContent = "1";
-  document.getElementById("stepOcrIcon").textContent = "2";
-  document.getElementById("stepReadyIcon").textContent = "3";
+  ["stepGps","stepOcr","stepReady"].forEach((id, i) => {
+    const el = document.getElementById(id);
+    const icon = document.getElementById(id + "Icon");
+    el.className = "step";
+    icon.textContent = String(i + 1);
+  });
+  document.getElementById("stepGpsText").textContent = "Odczytuję GPS z EXIF...";
+  document.getElementById("stepOcrText").textContent = "Analizuję tekst (OCR)...";
+  document.getElementById("stepReadyText").textContent = "Gotowe do zapisu";
 }
 
 function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
+  return new Promise((res, rej) => {
     const r = new FileReader();
-    r.onload = () => resolve(r.result);
-    r.onerror = reject;
+    r.onload = () => res(r.result);
+    r.onerror = rej;
     r.readAsDataURL(file);
-  });
-}
-
-
-// ╔══════════════════════════════════════════════════════════════════╗
-// ║  ZARZĄDZANIE ZDJĘCIAMI — dodawanie / usuwanie / render           ║
-// ╚══════════════════════════════════════════════════════════════════╝
-
-function handleNewFiles(fileList) {
-  if (!fileList || fileList.length === 0) return;
-
-  for (const file of fileList) {
-    const id = nextPhotoId++;
-    const dataUrl = URL.createObjectURL(file);
-    photos.push({
-      id,
-      file,
-      dataUrl,
-      base64: null,
-      gps: null,
-      ocrText: null,
-      status: "new", // new | processing | done | error
-    });
-  }
-
-  renderPhotos();
-  // Reset file inputs tak żeby można było dodać to samo zdjęcie ponownie
-  document.querySelectorAll('input[type="file"]').forEach(i => i.value = "");
-}
-
-function removePhoto(id) {
-  photos = photos.filter(p => p.id !== id);
-  renderPhotos();
-
-  // Jeśli usunięto wszystkie — schowaj formularz i status
-  if (photos.length === 0) {
-    formCard.classList.add("hidden");
-    statusCard.classList.add("hidden");
-  }
-}
-
-function renderPhotos() {
-  // Wyczyść stare thumbs (zostaw addPhotoBtn)
-  photosGrid.querySelectorAll(".photo-thumb").forEach(el => el.remove());
-
-  if (photos.length === 0) {
-    emptyState.classList.remove("hidden");
-    photosGrid.classList.add("hidden");
-    photoCount.classList.add("hidden");
-    btnProcess.classList.add("hidden");
-    return;
-  }
-
-  emptyState.classList.add("hidden");
-  photosGrid.classList.remove("hidden");
-  photoCount.classList.remove("hidden");
-  btnProcess.classList.remove("hidden");
-  photoCount.textContent = photos.length + " zdjęć";
-
-  // Wstaw thumbnails PRZED przyciskiem "+"
-  photos.forEach((p, idx) => {
-    const div = document.createElement("div");
-    div.className = "photo-thumb";
-    div.innerHTML = `
-      <img src="${p.dataUrl}" alt="Zdjęcie ${idx + 1}">
-      <div class="photo-badge">#${idx + 1}</div>
-      <button class="photo-delete" onclick="removePhoto(${p.id})" title="Usuń">✕</button>
-      ${p.status === "processing" ? '<div class="photo-status processing">OCR...</div>' : ""}
-      ${p.status === "done" ? '<div class="photo-status done">✓ OK</div>' : ""}
-      ${p.status === "error" ? '<div class="photo-status error">✗ Błąd</div>' : ""}
-    `;
-    photosGrid.insertBefore(div, addPhotoBtn);
   });
 }
 
@@ -586,6 +530,7 @@ function renderPhotos() {
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  EXIF GPS                                                         ║
 // ╚══════════════════════════════════════════════════════════════════╝
+
 function dmsToDecimal(dms, ref) {
   if (!dms || dms.length < 3) return null;
   let dec = dms[0] + dms[1] / 60 + dms[2] / 3600;
@@ -596,24 +541,19 @@ function dmsToDecimal(dms, ref) {
 function readExifGps(file) {
   return new Promise((resolve) => {
     const reader = new FileReader();
-    reader.onload = function (e) {
+    reader.onload = function(e) {
       const img = new Image();
-      img.onload = function () {
+      img.onload = function() {
         try {
-          EXIF.getData(img, function () {
-            const latDms = EXIF.getTag(this, "GPSLatitude");
-            const latRef = EXIF.getTag(this, "GPSLatitudeRef");
-            const lngDms = EXIF.getTag(this, "GPSLongitude");
-            const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
-            if (latDms && lngDms) {
-              resolve({ lat: dmsToDecimal(latDms, latRef), lng: dmsToDecimal(lngDms, lngRef) });
-            } else {
-              resolve(null);
-            }
+          EXIF.getData(img, function() {
+            const latD = EXIF.getTag(this, "GPSLatitude");
+            const latR = EXIF.getTag(this, "GPSLatitudeRef");
+            const lngD = EXIF.getTag(this, "GPSLongitude");
+            const lngR = EXIF.getTag(this, "GPSLongitudeRef");
+            if (latD && lngD) resolve({ lat: dmsToDecimal(latD, latR), lng: dmsToDecimal(lngD, lngR) });
+            else resolve(null);
           });
-        } catch (err) {
-          resolve(null);
-        }
+        } catch { resolve(null); }
       };
       img.src = e.target.result;
     };
@@ -625,181 +565,158 @@ function readExifGps(file) {
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  GOOGLE CLOUD VISION OCR                                          ║
 // ╚══════════════════════════════════════════════════════════════════╝
-async function runOcr(base64Image) {
-  const cleanBase64 = base64Image.replace(/^data:image\/[^;]+;base64,/, "");
+
+async function runOcr(base64) {
+  const clean = base64.replace(/^data:image\/[^;]+;base64,/, "");
   const url = `https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`;
-  const body = {
-    requests: [{ image: { content: cleanBase64 }, features: [{ type: "TEXT_DETECTION", maxResults: 1 }] }],
-  };
-  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error("Vision API " + res.status + ": " + errText.slice(0, 200));
-  }
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      requests: [{ image: { content: clean }, features: [{ type: "TEXT_DETECTION", maxResults: 1 }] }],
+    }),
+  });
+  if (!res.ok) throw new Error("Vision API " + res.status);
   const data = await res.json();
-  const annotations = data.responses?.[0]?.textAnnotations;
-  return annotations?.[0]?.description || "";
+  return data.responses?.[0]?.textAnnotations?.[0]?.description || "";
 }
 
 
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  CZYSZCZENIE TEKSTU                                               ║
 // ╚══════════════════════════════════════════════════════════════════╝
-const TRASH_PHRASES = [
+
+const TRASH = [
   /ś\.?\s*p\.?/gi, /zmarł[aey]?\.?/gi, /zm\s*\./gi, /żył[aey]?\s+lat/gi,
   /a\s*†\s*o/gi, /pamięci/gi, /prosi\s*(o\s*)?modlitwę/gi,
   /requiescat\s+in\s+pace/gi, /r\.?\s*i\.?\s*p\.?/gi,
   /spoczywaj\s+w\s+pokoju/gi, /tu\s+spoczywa/gi, /grób\s+rodzinny/gi,
   /pokój\s+(jej|jego|ich)\s+duszy/gi, /cześć\s+ich\s+pamięci/gi,
-  /kochany?a?\s+(mama|tata|ojciec|matka|żona|mąż|babcia|dziadek)/gi,
   /[†✝✞⸸☦]/g, /
 {3,}/g,
 ];
 
-function cleanOcrText(raw) {
-  let text = raw;
-  for (const re of TRASH_PHRASES) text = text.replace(re, " ");
-  return text.replace(/[ \t]+/g, " ").replace(/
- /g, "\n").trim();
+function cleanText(raw) {
+  let t = raw;
+  for (const re of TRASH) t = t.replace(re, " ");
+  return t.replace(/[ \t]+/g, " ").trim();
 }
 
-function parseGravestoneData(cleaned) {
-  const result = { imie: "", nazwisko: "", daty: "" };
-  const datePatterns = [
+function parseData(cleaned) {
+  const r = { imie: "", nazwisko: "", daty: "" };
+  const pats = [
     /(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4})\s*[-–—]\s*(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4})/g,
     /(\d{4})\s*[-–—]\s*(\d{4})/g,
     /\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4}/g,
     /\b(1[89]\d{2}|20[0-2]\d)\b/g,
   ];
-  let allDates = [];
-  let textWithoutDates = cleaned;
-  for (const pat of datePatterns) {
-    const matches = cleaned.match(pat);
-    if (matches) {
-      allDates.push(...matches);
-      for (const m of matches) textWithoutDates = textWithoutDates.replace(m, " ");
-    }
+  let dates = [], rest = cleaned;
+  for (const p of pats) {
+    const m = cleaned.match(p);
+    if (m) { dates.push(...m); for (const x of m) rest = rest.replace(x, " "); }
   }
-  result.daty = [...new Set(allDates)].join(" – ");
-  const nameWords = textWithoutDates
-    .replace(/[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s-]/g, " ")
-    .split(/\s+/)
+  r.daty = [...new Set(dates)].join(" – ");
+  const words = rest.replace(/[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s-]/g, " ").split(/\s+/)
     .filter(w => w.length >= 2 && /^[A-ZĄĆĘŁŃÓŚŹŻ]/.test(w));
-  if (nameWords.length >= 2) { result.imie = nameWords[0]; result.nazwisko = nameWords.slice(1).join(" "); }
-  else if (nameWords.length === 1) { result.nazwisko = nameWords[0]; }
-  return result;
+  if (words.length >= 2) { r.imie = words[0]; r.nazwisko = words.slice(1).join(" "); }
+  else if (words.length === 1) r.nazwisko = words[0];
+  return r;
 }
 
 
 // ╔══════════════════════════════════════════════════════════════════╗
-// ║  PRZETWARZANIE WSZYSTKICH ZDJĘĆ                                   ║
+// ║  GŁÓWNY FLOW — przycisk "Przetwórz i wyślij"                     ║
 // ╚══════════════════════════════════════════════════════════════════╝
 
-async function processAllPhotos() {
-  if (photos.length === 0) return;
+async function startProcessing() {
+  if (!photos.length) return;
 
-  // Schowaj formularz, pokaż status
+  btnStart.disabled = true;
+  btnStart.textContent = "⏳ Przetwarzam...";
   formCard.classList.add("hidden");
   statusCard.classList.remove("hidden");
   resetSteps();
-  btnProcess.disabled = true;
-  btnProcess.textContent = "⏳ Przetwarzam...";
 
-  // ── KROK 1: GPS — bierz z pierwszego zdjęcia które ma GPS ─────
+  // ── 1. GPS ────────────────────────────────────────────────────
   setStep("stepGps", "active");
-
-  let foundGps = null;
+  let gps = null;
   for (const p of photos) {
-    const gps = await readExifGps(p.file);
-    p.gps = gps;
-    if (gps && !foundGps) foundGps = gps;
+    const g = await readExifGps(p.file);
+    if (g && !gps) gps = g;
+  }
+  if (gps) {
+    fLat.value = gps.lat; fLng.value = gps.lng;
+    setStep("stepGps", "done", `GPS: ${gps.lat}, ${gps.lng}`);
+  } else {
+    fLat.value = ""; fLng.value = "";
+    setStep("stepGps", "error", "Brak GPS — wpisz ręcznie");
   }
 
-  if (foundGps) {
-    fLat.value = foundGps.lat;
-    fLng.value = foundGps.lng;
-    setStep("stepGps", "done", `GPS: ${foundGps.lat}, ${foundGps.lng}`);
+  // ── 2. OCR ────────────────────────────────────────────────────
+  if (!HAS_VISION_KEY) {
+    setStep("stepOcr", "done", "OCR pominięty (brak klucza API)");
+    ocrNote.classList.remove("hidden");
+    ocrDetails.classList.add("hidden");
+    fImie.value = ""; fNazwisko.value = ""; fDaty.value = "";
   } else {
-    fLat.value = "";
-    fLng.value = "";
-    setStep("stepGps", "error", "Brak GPS w żadnym zdjęciu — wpisz ręcznie");
-  }
+    ocrNote.classList.add("hidden");
+    ocrDetails.classList.remove("hidden");
+    setStep("stepOcr", "active");
 
-  // ── KROK 2: OCR na każdym zdjęciu ─────────────────────────────
-  setStep("stepOcr", "active");
-
-  const hasKey = GOOGLE_VISION_API_KEY !== "TUTAJ_WKLEJ_KLUCZ_API";
-  let allOcrTexts = [];
-
-  if (!hasKey) {
-    setStep("stepOcr", "error", "Brak klucza Vision API — wpisz dane ręcznie");
-    rawOcrText.textContent = "(Wklej klucz Google Vision API na górze kodu)";
-  } else {
+    let allTexts = [];
     for (let i = 0; i < photos.length; i++) {
       const p = photos[i];
-      p.status = "processing";
-      renderPhotos();
-      setStep("stepOcr", "active", `Analizuję zdjęcie ${i + 1}/${photos.length}...`);
-
+      p.status = "processing"; render();
+      setStep("stepOcr", "active", `OCR zdjęcie ${i+1}/${photos.length}...`);
       try {
-        if (!p.base64) p.base64 = await fileToBase64(p.file);
-        const text = await runOcr(p.base64);
-        p.ocrText = text;
+        const b64 = await fileToBase64(p.file);
+        const txt = await runOcr(b64);
         p.status = "done";
-        if (text) allOcrTexts.push(`[Zdjęcie ${i + 1}]\n${text}`);
-      } catch (err) {
-        console.error("OCR error photo " + (i + 1), err);
+        if (txt) allTexts.push(txt);
+      } catch (e) {
+        console.error(e);
         p.status = "error";
-        p.ocrText = "";
       }
-      renderPhotos();
+      render();
     }
 
-    if (allOcrTexts.length > 0) {
-      const combinedRaw = allOcrTexts.join("\n\n");
-      rawOcrText.textContent = combinedRaw;
-
-      // Połącz tekst ze wszystkich zdjęć i parsuj
-      const allRawJoined = photos.map(p => p.ocrText || "").join("\n");
-      const cleaned = cleanOcrText(allRawJoined);
-      const parsed = parseGravestoneData(cleaned);
-
+    if (allTexts.length) {
+      rawOcrText.textContent = allTexts.join("\n\n---\n\n");
+      const combined = cleanText(allTexts.join("\n"));
+      const parsed = parseData(combined);
       fImie.value = parsed.imie;
       fNazwisko.value = parsed.nazwisko;
       fDaty.value = parsed.daty;
-
-      setStep("stepOcr", "done", `Rozpoznano tekst z ${allOcrTexts.length}/${photos.length} zdjęć`);
+      setStep("stepOcr", "done", `Tekst z ${allTexts.length}/${photos.length} zdjęć`);
     } else {
-      rawOcrText.textContent = "(nie rozpoznano tekstu)";
-      fImie.value = "";
-      fNazwisko.value = "";
-      fDaty.value = "";
-      setStep("stepOcr", "error", "Nie rozpoznano tekstu — wpisz ręcznie");
+      rawOcrText.textContent = "(brak tekstu)";
+      fImie.value = ""; fNazwisko.value = ""; fDaty.value = "";
+      setStep("stepOcr", "error", "Nie rozpoznano tekstu");
     }
   }
 
-  // ── KROK 3: Gotowe ────────────────────────────────────────────
-  setStep("stepReady", "done", "Gotowe — sprawdź dane i wyślij");
+  // ── 3. Gotowe ─────────────────────────────────────────────────
+  setStep("stepReady", "done", "Sprawdź dane i wyślij");
   formCard.classList.remove("hidden");
   fInfo.value = "";
-  btnProcess.disabled = false;
-  btnProcess.textContent = "🔄 Analizuj ponownie";
+  btnStart.disabled = false;
+  btnStart.textContent = "🔄 Przetwórz ponownie";
 
   setTimeout(() => formCard.scrollIntoView({ behavior: "smooth", block: "start" }), 200);
 }
 
 
 // ╔══════════════════════════════════════════════════════════════════╗
-// ║  WYSYŁKA DO GOOGLE SHEETS (ta sama baza co mapa!)                ║
+// ║  WYSYŁKA DO GOOGLE SHEETS                                        ║
 // ╚══════════════════════════════════════════════════════════════════╝
 
 async function sendToSheets() {
-  const imie     = fImie.value.trim();
+  const imie = fImie.value.trim();
   const nazwisko = fNazwisko.value.trim();
-  const daty     = fDaty.value.trim();
-  const lat      = parseFloat(fLat.value);
-  const lng      = parseFloat(fLng.value);
-  const info     = fInfo.value.trim();
+  const daty = fDaty.value.trim();
+  const lat = parseFloat(fLat.value);
+  const lng = parseFloat(fLng.value);
+  const info = fInfo.value.trim();
 
   if (!nazwisko) { showToast("Wpisz przynajmniej nazwisko!", "error"); fNazwisko.focus(); return; }
   if (isNaN(lat) || isNaN(lng)) { showToast("Brak współrzędnych GPS!", "error"); fLat.focus(); return; }
@@ -814,45 +731,41 @@ async function sendToSheets() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        action:  "add",
-        id:      crypto.randomUUID(),
+        action: "add",
+        id: crypto.randomUUID(),
         miejsce: name + (daty ? " (" + daty + ")" : ""),
-        lat:     lat,
-        lng:     lng,
-        url:     "",
+        lat, lng,
+        url: "",
         hash_ip: "",
-        ip:      info || "",
+        ip: info || "",
       }),
       redirect: "follow",
     });
 
     let data;
     try { data = await res.json(); } catch { data = {}; }
-    if (data.status === "error") throw new Error(data.message || "Błąd Sheets");
+    if (data.status === "error") throw new Error(data.message || "Błąd");
 
     showToast("✅ Zapisano w bazie!", "success");
 
-    // Wyczyść wszystko pod kolejny nagrobek
-    photos = [];
-    nextPhotoId = 1;
-    renderPhotos();
+    // Reset
+    photos.forEach(p => URL.revokeObjectURL(p.thumbUrl));
+    photos = []; photoId = 0;
+    render();
     fImie.value = ""; fNazwisko.value = ""; fDaty.value = "";
     fLat.value = ""; fLng.value = ""; fInfo.value = "";
     rawOcrText.textContent = "—";
     formCard.classList.add("hidden");
     statusCard.classList.add("hidden");
-    btnProcess.textContent = "🔍 Analizuj wszystkie zdjęcia";
+    btnStart.textContent = "🚀 Przetwórz i wyślij";
     window.scrollTo({ top: 0, behavior: "smooth" });
-
   } catch (err) {
-    console.error("Send error:", err);
-    showToast("❌ Błąd: " + (err.message || "spróbuj ponownie"), "error");
+    showToast("❌ " + (err.message || "Spróbuj ponownie"), "error");
   } finally {
     btnSend.disabled = false;
     btnSend.textContent = "📤 WYŚLIJ DO BAZY";
   }
 }
 </script>
-
 </body>
 </html>
