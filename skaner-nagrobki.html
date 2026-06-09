@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>📸 Skaner Nagrobków</title>
+
+<!-- ═══════════════════════════════════════════════════════════════
+  SKANER NAGROBKÓW — Zdjęcia → EXIF GPS → OCR → Google Sheets
+
+  KONFIGURACJA:
+  1. Wklej swój klucz Google Cloud Vision API poniżej (GOOGLE_VISION_API_KEY)
+  2. Wklej swój link Google Apps Script (GOOGLE_SCRIPT_URL)
+     → To TEN SAM link co w aplikacji mapy — dane trafiają do tej samej bazy!
+
+  Jak uzyskać klucz Google Vision:
+  → https://console.cloud.google.com
+  → Włącz "Cloud Vision API"
+  → Credentials → Create API Key
+═══════════════════════════════════════════════════════════════ -->
+
+<!-- EXIF.js z CDN — odczyt GPS z metadanych zdjęcia -->
+<script src="https://cdn.jsdelivr.net/npm/exif-js@2.3.0/exif.min.js"></script>
+
+<!-- Google Fonts: Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #1a1a1a;
+    --surface2: #252525;
+    --border: #333;
+    --text: #f5f5f5;
+    --text2: #999;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --success: #22c55e;
+    --success-bg: #052e16;
+    --error: #ef4444;
+    --error-bg: #450a0a;
+    --warning: #f59e0b;
+    --radius: 16px;
+    --radius-sm: 12px;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px 16px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .header {
+    text-align: center;
+    padding: 20px 0 8px;
+  }
+  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .header p { color: var(--text2); font-size: 13px; margin-top: 4px; }
+
+  /* ── CARD ────────────────────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text2);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* ── PHOTO GALLERY ──────────────────────────────────────── */
+  .photos-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .photo-thumb {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .photo-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .photo-thumb .photo-badge {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+  .photo-thumb .photo-delete {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(239,68,68,0.9);
+    color: #fff;
+    border: none;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .photo-thumb:hover .photo-delete,
+  .photo-thumb:active .photo-delete {
+    opacity: 1;
+  }
+  /* Na mobile — zawsze widoczny */
+  @media (hover: none) {
+    .photo-thumb .photo-delete { opacity: 1; }
+  }
+
+  .photo-thumb .photo-status {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 3px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    text-align: center;
+  }
+  .photo-status.processing {
+    background: rgba(245,158,11,0.9);
+    color: #000;
+  }
+  .photo-status.done {
+    background: rgba(34,197,94,0.85);
+    color: #fff;
+  }
+  .photo-status.error {
+    background: rgba(239,68,68,0.85);
+    color: #fff;
+  }
+
+  .add-photo-zone {
+    aspect-ratio: 1;
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    position: relative;
+    gap: 4px;
+  }
+  .add-photo-zone:hover { border-color: var(--accent); }
+  .add-photo-zone .icon { font-size: 28px; }
+  .add-photo-zone span { font-size: 11px; color: var(--text2); }
+  .add-photo-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .photo-count {
+    font-size: 13px;
+    color: var(--text2);
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  /* ── EMPTY STATE ────────────────────────────────────────── */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: border-color 0.2s;
+    position: relative;
+  }
+  .empty-state:hover { border-color: var(--accent); }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { color: var(--text2); font-size: 14px; }
+  .empty-state input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* ── BUTTONS ────────────────────────────────────────────── */
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 16px 24px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover:not(:disabled) { background: #16a34a; }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover:not(:disabled) { background: var(--surface2); }
+
+  /* ── PROGRESS STEPS ─────────────────────────────────────── */
+  .steps { display: flex; flex-direction: column; gap: 10px; }
+  .step { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text2); transition: color 0.2s; }
+  .step.active { color: var(--warning); }
+  .step.done { color: var(--success); }
+  .step.error { color: var(--error); }
+  .step-icon {
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; flex-shrink: 0;
+    background: var(--surface2); border: 1px solid var(--border);
+  }
+  .step.active .step-icon { background: #422006; border-color: var(--warning); }
+  .step.done .step-icon { background: var(--success-bg); border-color: var(--success); }
+  .step.error .step-icon { background: var(--error-bg); border-color: var(--error); }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    width: 14px; height: 14px;
+    border: 2px solid transparent;
+    border-top-color: var(--warning);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  /* ── FORM FIELDS ────────────────────────────────────────── */
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 6px; }
+  .field input, .field textarea {
+    width: 100%; padding: 12px 14px;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); font-family: inherit; font-size: 15px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .field input:focus, .field textarea:focus { border-color: var(--accent); }
+  .field textarea { resize: vertical; min-height: 60px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── TOAST ──────────────────────────────────────────────── */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    padding: 14px 24px; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 600; z-index: 9999;
+    opacity: 0; transition: all 0.3s ease; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast.success { background: var(--success); color: #fff; }
+  .toast.error { background: var(--error); color: #fff; }
+
+  /* ── OCR RAW ────────────────────────────────────────────── */
+  .raw-text {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px; font-size: 13px; color: var(--text2);
+    max-height: 150px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ── HEADER ──────────────────────────────────────────── -->
+  <div class="header">
+    <h1>📸 Skaner Nagrobków</h1>
+    <p>Wiele zdjęć → GPS + OCR → Twoja baza danych</p>
+  </div>
+
+  <!-- ── ZDJĘCIA ─────────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">
+      <span>📷 Zdjęcia nagrobka</span>
+      <span id="photoCount" class="hidden" style="font-size:12px;color:var(--accent);text-transform:none;letter-spacing:0"></span>
+    </div>
+
+    <!-- Pusty stan — gdy nie ma żadnych zdjęć -->
+    <div class="empty-state" id="emptyState">
+      <div class="icon">📷</div>
+      <p>Dotknij, aby zrobić zdjęcie<br>lub wybrać z galerii</p>
+      <p style="margin-top:8px;font-size:12px;color:var(--text2)">Możesz dodać wiele zdjęć</p>
+      <input type="file" accept="image/*" capture="environment" multiple onchange="handleNewFiles(this.files)">
+    </div>
+
+    <!-- Siatka zdjęć + przycisk dodawania -->
+    <div class="photos-grid hidden" id="photosGrid">
+      <!-- Thumbnails wstawiane dynamicznie -->
+      <!-- Ostatni element: przycisk "+" -->
+      <div class="add-photo-zone" id="addPhotoBtn">
+        <div class="icon">＋</div>
+        <span>Dodaj</span>
+        <input type="file" accept="image/*" capture="environment" multiple onchange="handleNewFiles(this.files)">
+      </div>
+    </div>
+
+    <button class="btn btn-outline hidden" id="btnProcess" onclick="processAllPhotos()" style="margin-top:12px">
+      🔍 Analizuj wszystkie zdjęcia
+    </button>
+  </div>
+
+  <!-- ── STATUS / POSTĘP ─────────────────────────────────── -->
+  <div class="card hidden" id="statusCard">
+    <div class="card-title">⏳ Status przetwarzania</div>
+    <div class="steps">
+      <div class="step" id="stepGps">
+        <div class="step-icon" id="stepGpsIcon">1</div>
+        <span id="stepGpsText">Odczytuję GPS z EXIF...</span>
+      </div>
+      <div class="step" id="stepOcr">
+        <div class="step-icon" id="stepOcrIcon">2</div>
+        <span id="stepOcrText">Analizuję tekst przez AI...</span>
+      </div>
+      <div class="step" id="stepReady">
+        <div class="step-icon" id="stepReadyIcon">3</div>
+        <span id="stepReadyText">Gotowe do zapisu</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FORMULARZ ────────────────────────────────────────── -->
+  <div class="card hidden" id="formCard">
+    <div class="card-title">✏️ Sprawdź i popraw dane</div>
+
+    <details style="margin-bottom:14px">
+      <summary style="font-size:13px;color:var(--text2);cursor:pointer;margin-bottom:8px">
+        🔍 Pokaż surowy tekst OCR (ze wszystkich zdjęć)
+      </summary>
+      <div class="raw-text" id="rawOcrText">—</div>
+    </details>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Imię</label>
+        <input type="text" id="fImie" placeholder="np. Jan">
+      </div>
+      <div class="field">
+        <label>Nazwisko</label>
+        <input type="text" id="fNazwisko" placeholder="np. Kowalski">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Daty (urodzenia – zgonu)</label>
+      <input type="text" id="fDaty" placeholder="np. 1920-1985">
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Latitude</label>
+        <input type="text" id="fLat" placeholder="np. 51.7592">
+      </div>
+      <div class="field">
+        <label>Longitude</label>
+        <input type="text" id="fLng" placeholder="np. 19.4560">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Dodatkowe info (opcjonalne)</label>
+      <textarea id="fInfo" placeholder="np. grób rodzinny, sektor A3"></textarea>
+    </div>
+
+    <button class="btn btn-success" id="btnSend" onclick="sendToSheets()" style="margin-top:16px">
+      📤 WYŚLIJ DO BAZY
+    </button>
+  </div>
+
+</div>
+
+<!-- ── TOAST ──────────────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  KONFIGURACJA — wklej swoje klucze poniżej                      ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+// ── Google Cloud Vision API Key ──────────────────────────────────
+// Jak uzyskać:
+//   1. Wejdź na https://console.cloud.google.com
+//   2. Utwórz nowy projekt (lub wybierz istniejący)
+//   3. Włącz API: "Cloud Vision API"
+//   4. Przejdź do Credentials → Create Credentials → API Key
+//   5. Skopiuj klucz i wklej poniżej
+const GOOGLE_VISION_API_KEY = "TUTAJ_WKLEJ_KLUCZ_API";
+
+// ── Google Apps Script URL ───────────────────────────────────────
+// TEN SAM link co w aplikacji mapy — dane trafiają do JEDNEJ bazy!
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVqkv-4-YJNC5UihGVzGcW2BaQ0J9z4XcySKglc2BFVEz1VCvVNRQEjhL17jK8nSo/exec";
+
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  STAN APLIKACJI — lista zdjęć                                     ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+// Każde zdjęcie: { id, file, dataUrl, base64, gps, ocrText, status }
+let photos = [];
+let nextPhotoId = 1;
+
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  ELEMENTY DOM                                                     ║
+// ╚══════════════════════════════════════════════════════════════════╝
+const emptyState    = document.getElementById("emptyState");
+const photosGrid    = document.getElementById("photosGrid");
+const addPhotoBtn   = document.getElementById("addPhotoBtn");
+const photoCount    = document.getElementById("photoCount");
+const btnProcess    = document.getElementById("btnProcess");
+const statusCard    = document.getElementById("statusCard");
+const formCard      = document.getElementById("formCard");
+const rawOcrText    = document.getElementById("rawOcrText");
+const btnSend       = document.getElementById("btnSend");
+const toastEl       = document.getElementById("toast");
+
+const fImie     = document.getElementById("fImie");
+const fNazwisko = document.getElementById("fNazwisko");
+const fDaty     = document.getElementById("fDaty");
+const fLat      = document.getElementById("fLat");
+const fLng      = document.getElementById("fLng");
+const fInfo     = document.getElementById("fInfo");
+
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  HELPERS                                                          ║
+// ╚══════════════════════════════════════════════════════════════════╝
+function showToast(msg, type = "success") {
+  toastEl.textContent = msg;
+  toastEl.className = "toast " + type + " show";
+  setTimeout(() => { toastEl.className = "toast"; }, 3000);
+}
+
+function setStep(id, state, text) {
+  const step = document.getElementById(id);
+  const icon = document.getElementById(id + "Icon");
+  const txt  = document.getElementById(id + "Text");
+  step.className = "step " + state;
+  if (text) txt.textContent = text;
+  if (state === "active") icon.innerHTML = '<div class="spinner"></div>';
+  else if (state === "done") icon.textContent = "✓";
+  else if (state === "error") icon.textContent = "✗";
+}
+
+function resetSteps() {
+  setStep("stepGps", "", "Odczytuję GPS z EXIF...");
+  setStep("stepOcr", "", "Analizuję tekst przez AI...");
+  setStep("stepReady", "", "Gotowe do zapisu");
+  document.getElementById("stepGpsIcon").textContent = "1";
+  document.getElementById("stepOcrIcon").textContent = "2";
+  document.getElementById("stepReadyIcon").textContent = "3";
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  ZARZĄDZANIE ZDJĘCIAMI — dodawanie / usuwanie / render           ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+function handleNewFiles(fileList) {
+  if (!fileList || fileList.length === 0) return;
+
+  for (const file of fileList) {
+    const id = nextPhotoId++;
+    const dataUrl = URL.createObjectURL(file);
+    photos.push({
+      id,
+      file,
+      dataUrl,
+      base64: null,
+      gps: null,
+      ocrText: null,
+      status: "new", // new | processing | done | error
+    });
+  }
+
+  renderPhotos();
+  // Reset file inputs tak żeby można było dodać to samo zdjęcie ponownie
+  document.querySelectorAll('input[type="file"]').forEach(i => i.value = "");
+}
+
+function removePhoto(id) {
+  photos = photos.filter(p => p.id !== id);
+  renderPhotos();
+
+  // Jeśli usunięto wszystkie — schowaj formularz i status
+  if (photos.length === 0) {
+    formCard.classList.add("hidden");
+    statusCard.classList.add("hidden");
+  }
+}
+
+function renderPhotos() {
+  // Wyczyść stare thumbs (zostaw addPhotoBtn)
+  photosGrid.querySelectorAll(".photo-thumb").forEach(el => el.remove());
+
+  if (photos.length === 0) {
+    emptyState.classList.remove("hidden");
+    photosGrid.classList.add("hidden");
+    photoCount.classList.add("hidden");
+    btnProcess.classList.add("hidden");
+    return;
+  }
+
+  emptyState.classList.add("hidden");
+  photosGrid.classList.remove("hidden");
+  photoCount.classList.remove("hidden");
+  btnProcess.classList.remove("hidden");
+  photoCount.textContent = photos.length + " zdjęć";
+
+  // Wstaw thumbnails PRZED przyciskiem "+"
+  photos.forEach((p, idx) => {
+    const div = document.createElement("div");
+    div.className = "photo-thumb";
+    div.innerHTML = `
+      <img src="${p.dataUrl}" alt="Zdjęcie ${idx + 1}">
+      <div class="photo-badge">#${idx + 1}</div>
+      <button class="photo-delete" onclick="removePhoto(${p.id})" title="Usuń">✕</button>
+      ${p.status === "processing" ? '<div class="photo-status processing">OCR...</div>' : ""}
+      ${p.status === "done" ? '<div class="photo-status done">✓ OK</div>' : ""}
+      ${p.status === "error" ? '<div class="photo-status error">✗ Błąd</div>' : ""}
+    `;
+    photosGrid.insertBefore(div, addPhotoBtn);
+  });
+}
+
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  EXIF GPS                                                         ║
+// ╚══════════════════════════════════════════════════════════════════╝
+function dmsToDecimal(dms, ref) {
+  if (!dms || dms.length < 3) return null;
+  let dec = dms[0] + dms[1] / 60 + dms[2] / 3600;
+  if (ref === "S" || ref === "W") dec = -dec;
+  return parseFloat(dec.toFixed(6));
+}
+
+function readExifGps(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const img = new Image();
+      img.onload = function () {
+        try {
+          EXIF.getData(img, function () {
+            const latDms = EXIF.getTag(this, "GPSLatitude");
+            const latRef = EXIF.getTag(this, "GPSLatitudeRef");
+            const lngDms = EXIF.getTag(this, "GPSLongitude");
+            const lngRef = EXIF.getTag(this, "GPSLongitudeRef");
+            if (latDms && lngDms) {
+              resolve({ lat: dmsToDecimal(latDms, latRef), lng: dmsToDecimal(lngDms, lngRef) });
+            } else {
+              resolve(null);
+            }
+          });
+        } catch (err) {
+          resolve(null);
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  GOOGLE CLOUD VISION OCR                                          ║
+// ╚══════════════════════════════════════════════════════════════════╝
+async function runOcr(base64Image) {
+  const cleanBase64 = base64Image.replace(/^data:image\/[^;]+;base64,/, "");
+  const url = `https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_VISION_API_KEY}`;
+  const body = {
+    requests: [{ image: { content: cleanBase64 }, features: [{ type: "TEXT_DETECTION", maxResults: 1 }] }],
+  };
+  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error("Vision API " + res.status + ": " + errText.slice(0, 200));
+  }
+  const data = await res.json();
+  const annotations = data.responses?.[0]?.textAnnotations;
+  return annotations?.[0]?.description || "";
+}
+
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  CZYSZCZENIE TEKSTU                                               ║
+// ╚══════════════════════════════════════════════════════════════════╝
+const TRASH_PHRASES = [
+  /ś\.?\s*p\.?/gi, /zmarł[aey]?\.?/gi, /zm\s*\./gi, /żył[aey]?\s+lat/gi,
+  /a\s*†\s*o/gi, /pamięci/gi, /prosi\s*(o\s*)?modlitwę/gi,
+  /requiescat\s+in\s+pace/gi, /r\.?\s*i\.?\s*p\.?/gi,
+  /spoczywaj\s+w\s+pokoju/gi, /tu\s+spoczywa/gi, /grób\s+rodzinny/gi,
+  /pokój\s+(jej|jego|ich)\s+duszy/gi, /cześć\s+ich\s+pamięci/gi,
+  /kochany?a?\s+(mama|tata|ojciec|matka|żona|mąż|babcia|dziadek)/gi,
+  /[†✝✞⸸☦]/g, /
+{3,}/g,
+];
+
+function cleanOcrText(raw) {
+  let text = raw;
+  for (const re of TRASH_PHRASES) text = text.replace(re, " ");
+  return text.replace(/[ \t]+/g, " ").replace(/
+ /g, "\n").trim();
+}
+
+function parseGravestoneData(cleaned) {
+  const result = { imie: "", nazwisko: "", daty: "" };
+  const datePatterns = [
+    /(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4})\s*[-–—]\s*(\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4})/g,
+    /(\d{4})\s*[-–—]\s*(\d{4})/g,
+    /\d{1,2}[.\-/]\d{1,2}[.\-/]\d{4}/g,
+    /\b(1[89]\d{2}|20[0-2]\d)\b/g,
+  ];
+  let allDates = [];
+  let textWithoutDates = cleaned;
+  for (const pat of datePatterns) {
+    const matches = cleaned.match(pat);
+    if (matches) {
+      allDates.push(...matches);
+      for (const m of matches) textWithoutDates = textWithoutDates.replace(m, " ");
+    }
+  }
+  result.daty = [...new Set(allDates)].join(" – ");
+  const nameWords = textWithoutDates
+    .replace(/[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s-]/g, " ")
+    .split(/\s+/)
+    .filter(w => w.length >= 2 && /^[A-ZĄĆĘŁŃÓŚŹŻ]/.test(w));
+  if (nameWords.length >= 2) { result.imie = nameWords[0]; result.nazwisko = nameWords.slice(1).join(" "); }
+  else if (nameWords.length === 1) { result.nazwisko = nameWords[0]; }
+  return result;
+}
+
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  PRZETWARZANIE WSZYSTKICH ZDJĘĆ                                   ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+async function processAllPhotos() {
+  if (photos.length === 0) return;
+
+  // Schowaj formularz, pokaż status
+  formCard.classList.add("hidden");
+  statusCard.classList.remove("hidden");
+  resetSteps();
+  btnProcess.disabled = true;
+  btnProcess.textContent = "⏳ Przetwarzam...";
+
+  // ── KROK 1: GPS — bierz z pierwszego zdjęcia które ma GPS ─────
+  setStep("stepGps", "active");
+
+  let foundGps = null;
+  for (const p of photos) {
+    const gps = await readExifGps(p.file);
+    p.gps = gps;
+    if (gps && !foundGps) foundGps = gps;
+  }
+
+  if (foundGps) {
+    fLat.value = foundGps.lat;
+    fLng.value = foundGps.lng;
+    setStep("stepGps", "done", `GPS: ${foundGps.lat}, ${foundGps.lng}`);
+  } else {
+    fLat.value = "";
+    fLng.value = "";
+    setStep("stepGps", "error", "Brak GPS w żadnym zdjęciu — wpisz ręcznie");
+  }
+
+  // ── KROK 2: OCR na każdym zdjęciu ─────────────────────────────
+  setStep("stepOcr", "active");
+
+  const hasKey = GOOGLE_VISION_API_KEY !== "TUTAJ_WKLEJ_KLUCZ_API";
+  let allOcrTexts = [];
+
+  if (!hasKey) {
+    setStep("stepOcr", "error", "Brak klucza Vision API — wpisz dane ręcznie");
+    rawOcrText.textContent = "(Wklej klucz Google Vision API na górze kodu)";
+  } else {
+    for (let i = 0; i < photos.length; i++) {
+      const p = photos[i];
+      p.status = "processing";
+      renderPhotos();
+      setStep("stepOcr", "active", `Analizuję zdjęcie ${i + 1}/${photos.length}...`);
+
+      try {
+        if (!p.base64) p.base64 = await fileToBase64(p.file);
+        const text = await runOcr(p.base64);
+        p.ocrText = text;
+        p.status = "done";
+        if (text) allOcrTexts.push(`[Zdjęcie ${i + 1}]\n${text}`);
+      } catch (err) {
+        console.error("OCR error photo " + (i + 1), err);
+        p.status = "error";
+        p.ocrText = "";
+      }
+      renderPhotos();
+    }
+
+    if (allOcrTexts.length > 0) {
+      const combinedRaw = allOcrTexts.join("\n\n");
+      rawOcrText.textContent = combinedRaw;
+
+      // Połącz tekst ze wszystkich zdjęć i parsuj
+      const allRawJoined = photos.map(p => p.ocrText || "").join("\n");
+      const cleaned = cleanOcrText(allRawJoined);
+      const parsed = parseGravestoneData(cleaned);
+
+      fImie.value = parsed.imie;
+      fNazwisko.value = parsed.nazwisko;
+      fDaty.value = parsed.daty;
+
+      setStep("stepOcr", "done", `Rozpoznano tekst z ${allOcrTexts.length}/${photos.length} zdjęć`);
+    } else {
+      rawOcrText.textContent = "(nie rozpoznano tekstu)";
+      fImie.value = "";
+      fNazwisko.value = "";
+      fDaty.value = "";
+      setStep("stepOcr", "error", "Nie rozpoznano tekstu — wpisz ręcznie");
+    }
+  }
+
+  // ── KROK 3: Gotowe ────────────────────────────────────────────
+  setStep("stepReady", "done", "Gotowe — sprawdź dane i wyślij");
+  formCard.classList.remove("hidden");
+  fInfo.value = "";
+  btnProcess.disabled = false;
+  btnProcess.textContent = "🔄 Analizuj ponownie";
+
+  setTimeout(() => formCard.scrollIntoView({ behavior: "smooth", block: "start" }), 200);
+}
+
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  WYSYŁKA DO GOOGLE SHEETS (ta sama baza co mapa!)                ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+async function sendToSheets() {
+  const imie     = fImie.value.trim();
+  const nazwisko = fNazwisko.value.trim();
+  const daty     = fDaty.value.trim();
+  const lat      = parseFloat(fLat.value);
+  const lng      = parseFloat(fLng.value);
+  const info     = fInfo.value.trim();
+
+  if (!nazwisko) { showToast("Wpisz przynajmniej nazwisko!", "error"); fNazwisko.focus(); return; }
+  if (isNaN(lat) || isNaN(lng)) { showToast("Brak współrzędnych GPS!", "error"); fLat.focus(); return; }
+
+  btnSend.disabled = true;
+  btnSend.textContent = "⏳ Wysyłam...";
+
+  const name = [imie, nazwisko].filter(Boolean).join(" ");
+
+  try {
+    const res = await fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action:  "add",
+        id:      crypto.randomUUID(),
+        miejsce: name + (daty ? " (" + daty + ")" : ""),
+        lat:     lat,
+        lng:     lng,
+        url:     "",
+        hash_ip: "",
+        ip:      info || "",
+      }),
+      redirect: "follow",
+    });
+
+    let data;
+    try { data = await res.json(); } catch { data = {}; }
+    if (data.status === "error") throw new Error(data.message || "Błąd Sheets");
+
+    showToast("✅ Zapisano w bazie!", "success");
+
+    // Wyczyść wszystko pod kolejny nagrobek
+    photos = [];
+    nextPhotoId = 1;
+    renderPhotos();
+    fImie.value = ""; fNazwisko.value = ""; fDaty.value = "";
+    fLat.value = ""; fLng.value = ""; fInfo.value = "";
+    rawOcrText.textContent = "—";
+    formCard.classList.add("hidden");
+    statusCard.classList.add("hidden");
+    btnProcess.textContent = "🔍 Analizuj wszystkie zdjęcia";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+  } catch (err) {
+    console.error("Send error:", err);
+    showToast("❌ Błąd: " + (err.message || "spróbuj ponownie"), "error");
+  } finally {
+    btnSend.disabled = false;
+    btnSend.textContent = "📤 WYŚLIJ DO BAZY";
+  }
+}
+</script>
+
+</body>
+</html>
