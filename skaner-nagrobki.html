@@ -492,9 +492,21 @@ function resetSteps() {
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  EXIF GPS                                                         ║
 // ╚══════════════════════════════════════════════════════════════════╝
+function exifVal(v) {
+  // EXIF values can be plain numbers OR objects with numerator/denominator
+  if (v == null) return 0;
+  if (typeof v === "number") return v;
+  if (typeof v === "object" && v.numerator != null && v.denominator != null) {
+    return v.denominator !== 0 ? v.numerator / v.denominator : 0;
+  }
+  return parseFloat(v) || 0;
+}
 function dmsToDecimal(dms, ref) {
   if (!dms || dms.length < 3) return null;
-  var dec = dms[0] + dms[1] / 60 + dms[2] / 3600;
+  var degrees = exifVal(dms[0]);
+  var minutes = exifVal(dms[1]);
+  var seconds = exifVal(dms[2]);
+  var dec = degrees + (minutes / 60) + (seconds / 3600);
   if (ref === "S" || ref === "W") dec = -dec;
   return parseFloat(dec.toFixed(6));
 }
