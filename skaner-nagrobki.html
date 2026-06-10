@@ -183,7 +183,7 @@
     font-size: 14px; font-weight: 600; white-space: nowrap;
     overflow: hidden; text-overflow: ellipsis;
   }
-  .record-header-info .rh-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .record-header-info .rh-sub { font-size: 11px; color: var(--text2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .record-badge {
     font-size: 10px; font-weight: 700; padding: 3px 8px;
     border-radius: 6px; flex-shrink: 0; text-transform: uppercase;
@@ -250,7 +250,7 @@
     <div>
       <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:4px">☁️ URL Cloudflare Worker <span style="opacity:0.6">(opcjonalny)</span>:</label>
       <div style="display:flex;gap:8px">
-        <input type="text" id="workerUrlInput" placeholder="https://cold-smoke-5b2e.szalonyereer.workers.dev/" style="flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:monospace;font-size:12px;outline:none">
+        <input type="text" id="workerUrlInput" placeholder="https://moj-worker.username.workers.dev" style="flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:monospace;font-size:12px;outline:none">
         <button class="btn btn-primary btn-sm" onclick="saveWorkerUrl()" style="width:auto;padding:10px 16px">💾</button>
       </div>
       <p style="font-size:11px;color:var(--text2);margin-top:4px">Jeśli podasz URL Workera — dane pójdą przez niego (z haszowaniem IP).<br>Jeśli pusty — wysyłka bezpośrednio do Google Sheets.</p>
@@ -332,7 +332,7 @@ var HAS_VISION_KEY = !!GOOGLE_VISION_API_KEY;
 // ║  STAN                                                             ║
 // ╚══════════════════════════════════════════════════════════════════╝
 var photos = [];   // { id, file, dataUrl, status }
-var records = [];  // { id, photoId, dataUrl, imie, nazwisko, daty, lat, lng, info, ocrRaw, sendStatus }
+var records = [];  // { id, photoId, dataUrl, nazwa, daty, lat, lng, info, ocrRaw, sendStatus, fileName }
 var nextId = 0;
 
 // ╔══════════════════════════════════════════════════════════════════╗
@@ -606,7 +606,7 @@ async function startProcessing() {
       var gps = gpsPerPhoto[i];
       records.push({
         id: ++nextId, photoId: photos[i].id, dataUrl: photos[i].dataUrl,
-        imie: "", nazwisko: "", daty: "",
+        nazwa: "", daty: "", fileName: photos[i].file.name,
         lat: gps ? String(gps.lat) : "", lng: gps ? String(gps.lng) : "",
         info: "", ocrRaw: "", sendStatus: "ready"
       });
@@ -627,9 +627,10 @@ async function startProcessing() {
       renderGrid();
       var gps = gpsPerPhoto[j];
       var parsed = ocrText ? parseData(cleanText(ocrText)) : { imie: "", nazwisko: "", daty: "" };
+      var fullName = [parsed.imie, parsed.nazwisko].filter(Boolean).join(" ");
       records.push({
         id: ++nextId, photoId: photos[j].id, dataUrl: photos[j].dataUrl,
-        imie: parsed.imie, nazwisko: parsed.nazwisko, daty: parsed.daty,
+        nazwa: fullName, daty: parsed.daty, fileName: photos[j].file.name,
         lat: gps ? String(gps.lat) : "", lng: gps ? String(gps.lng) : "",
         info: "", ocrRaw: ocrText, sendStatus: "ready"
       });
@@ -675,11 +676,11 @@ function renderRecords() {
     var info = document.createElement("div"); info.className = "record-header-info";
     var nameEl = document.createElement("div"); nameEl.className = "rh-name";
     nameEl.id = "rh-name-" + rec.id;
-    nameEl.textContent = (rec.imie || rec.nazwisko) ? [rec.imie, rec.nazwisko].filter(Boolean).join(" ") : "Zdjęcie #" + (idx + 1);
+    nameEl.textContent = rec.nazwa || "Zdjęcie #" + (idx + 1);
     info.appendChild(nameEl);
     var sub = document.createElement("div"); sub.className = "rh-sub";
     sub.id = "rh-sub-" + rec.id;
-    sub.textContent = rec.daty || "brak dat";
+    sub.textContent = (rec.daty || "brak dat") + "  •  " + rec.fileName;
     info.appendChild(sub);
     header.appendChild(info);
     var badge = document.createElement("div"); badge.className = "record-badge";
@@ -708,14 +709,17 @@ function renderRecords() {
     }
 
     // Fields
-    var row1 = document.createElement("div"); row1.className = "field-row";
-    row1.innerHTML = '<div class="field"><label>Imię</label><input type="text" id="f-imie-'+rec.id+'" value="'+escHtml(rec.imie)+'" placeholder="np. Jan" oninput="updateRecordField('+rec.id+',\'imie\',this.value)"></div>'
-      + '<div class="field"><label>Nazwisko</label><input type="text" id="f-nazwisko-'+rec.id+'" value="'+escHtml(rec.nazwisko)+'" placeholder="np. Kowalski" oninput="updateRecordField('+rec.id+',\'nazwisko\',this.value)"></div>';
-    body.appendChild(row1);
+    var fNazwa = document.createElement("div"); fNazwa.className = "field";
+    fNazwa.innerHTML = '<label>Imię i nazwisko</label><input type="text" id="f-nazwa-'+rec.id+'" value="'+escHtml(rec.nazwa)+'" placeholder="np. Jan Kowalski" oninput="updateRecordField('+rec.id+',\'nazwa\',this.value)">';
+    body.appendChild(fNazwa);
 
     var fDaty = document.createElement("div"); fDaty.className = "field";
     fDaty.innerHTML = '<label>Daty</label><input type="text" id="f-daty-'+rec.id+'" value="'+escHtml(rec.daty)+'" placeholder="np. 1920-1985" oninput="updateRecordField('+rec.id+',\'daty\',this.value)">';
     body.appendChild(fDaty);
+
+    var fFile = document.createElement("div"); fFile.className = "field";
+    fFile.innerHTML = '<label>📁 Nazwa pliku</label><input type="text" value="'+escHtml(rec.fileName)+'" readonly style="opacity:0.7;cursor:default">';
+    body.appendChild(fFile);
 
     var row2 = document.createElement("div"); row2.className = "field-row";
     row2.innerHTML = '<div class="field"><label>Latitude</label><input type="text" id="f-lat-'+rec.id+'" value="'+escHtml(rec.lat)+'" placeholder="51.7592" oninput="updateRecordField('+rec.id+',\'lat\',this.value)"></div>'
@@ -749,8 +753,8 @@ function updateRecordField(id, field, value) {
   // Update header preview
   var nameEl = document.getElementById("rh-name-" + id);
   var subEl = document.getElementById("rh-sub-" + id);
-  if (nameEl) nameEl.textContent = [rec.imie, rec.nazwisko].filter(Boolean).join(" ") || "Bez nazwy";
-  if (subEl) subEl.textContent = rec.daty || "brak dat";
+  if (nameEl) nameEl.textContent = rec.nazwa || "Bez nazwy";
+  if (subEl) subEl.textContent = (rec.daty || "brak dat") + "  •  " + (rec.fileName || "");
 }
 
 function removeRecord(id) {
@@ -775,24 +779,22 @@ function updateCounters() {
 // ║  WYSYŁANIE — obsługa Cloudflare Worker + fallback Sheets          ║
 // ╚══════════════════════════════════════════════════════════════════╝
 async function sendRecord(rec) {
-  var imie = rec.imie.trim();
-  var nazwisko = rec.nazwisko.trim();
+  var nazwa = rec.nazwa.trim();
   var daty = rec.daty.trim();
-  var lat = parseFloat(rec.lat);
-  var lng = parseFloat(rec.lng);
+  var lat = rec.lat.trim() ? parseFloat(rec.lat) : null;
+  var lng = rec.lng.trim() ? parseFloat(rec.lng) : null;
   var info = rec.info.trim();
 
-  if (!nazwisko) throw new Error("Brak nazwiska");
-  if (isNaN(lat) || isNaN(lng)) throw new Error("Brak GPS");
+  if (!nazwa) throw new Error("Wpisz imię i nazwisko");
 
-  var name = [imie, nazwisko].filter(Boolean).join(" ") + (daty ? " (" + daty + ")" : "");
+  var name = nazwa + (daty ? " (" + daty + ")" : "");
 
   if (CLOUDFLARE_WORKER_URL) {
     // ── Przez Cloudflare Worker (haszowanie IP po stronie Workera) ──
     var res = await fetch(CLOUDFLARE_WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name, lat: lat, lng: lng }),
+      body: JSON.stringify({ name: name, lat: lat || 0, lng: lng || 0 }),
     });
     var data;
     try { data = await res.json(); } catch(ex) { throw new Error("Błąd odpowiedzi Workera: " + res.status); }
@@ -808,8 +810,8 @@ async function sendRecord(rec) {
         action: "add",
         id: customId,
         miejsce: name,
-        lat: lat,
-        lng: lng,
+        lat: lat || "",
+        lng: lng || "",
         url: "",
         hash_ip: "",
         ip: info || "",
@@ -839,7 +841,7 @@ async function sendSingle(id) {
     body.classList.remove("open");
     btn.textContent = "✅ Wysłano";
     updateCounters();
-    showToast("✅ Wysłano: " + [rec.imie, rec.nazwisko].filter(Boolean).join(" "), "success");
+    showToast("✅ Wysłano: " + (rec.nazwa || rec.fileName), "success");
   } catch(err) {
     btn.disabled = false; btn.textContent = "📤 Wyślij";
     var badge = document.getElementById("badge-" + id);
