@@ -224,6 +224,14 @@
 
     <div id="apiStatus" style="padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:14px;text-align:center"></div>
 
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:4px">🤖 Silnik AI:</label>
+      <div style="display:flex;gap:8px">
+        <button id="btnProvOpenAI" onclick="switchProvider('openai')" class="btn btn-sm" style="flex:1;font-size:13px;padding:10px">🟢 OpenAI (GPT-4o-mini)</button>
+        <button id="btnProvGemini" onclick="switchProvider('gemini')" class="btn btn-sm" style="flex:1;font-size:13px;padding:10px">🔵 Google Gemini</button>
+      </div>
+    </div>
+
     <details style="margin-bottom:12px">
       <summary style="font-size:14px;font-weight:600;cursor:pointer;color:var(--text);margin-bottom:10px">
         📋 Jak uzyskać klucz Gemini API (za darmo) — SZCZEGÓŁOWA INSTRUKCJA
@@ -343,7 +351,7 @@
       </div>
       <div class="step" id="stepOcr">
         <div class="step-icon" id="stepOcrIcon">2</div>
-        <span id="stepOcrText">🤖 Analiza AI (Gemini)...</span>
+        <span id="stepOcrText">🤖 Analiza AI...</span>
       </div>
       <div class="step" id="stepReady">
         <div class="step-icon" id="stepReadyIcon">3</div>
@@ -378,9 +386,11 @@
 // ║  KONFIGURACJA                                                     ║
 // ╚══════════════════════════════════════════════════════════════════╝
 var GEMINI_API_KEY = localStorage.getItem("GEMINI_API_KEY") || "";
+var OPENAI_API_KEY = localStorage.getItem("OPENAI_API_KEY") || "";
 var CLOUDFLARE_WORKER_URL = localStorage.getItem("CLOUDFLARE_WORKER_URL") || "";
 var GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVqkv-4-YJNC5UihGVzGcW2BaQ0J9z4XcySKglc2BFVEz1VCvVNRQEjhL17jK8nSo/exec";
-var HAS_AI_KEY = !!GEMINI_API_KEY;
+var AI_PROVIDER = localStorage.getItem("AI_PROVIDER") || "openai";
+var HAS_AI_KEY = !!(AI_PROVIDER === "openai" ? OPENAI_API_KEY : GEMINI_API_KEY);
 
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  STAN                                                             ║
@@ -394,14 +404,31 @@ var nextId = 0;
 // ╚══════════════════════════════════════════════════════════════════╝
 function updateApiStatus() {
   var el = document.getElementById("apiStatus");
+  var activeKey = AI_PROVIDER === "openai" ? OPENAI_API_KEY : GEMINI_API_KEY;
+  HAS_AI_KEY = !!activeKey;
   if (HAS_AI_KEY) {
     el.style.background = "var(--success-bg)"; el.style.border = "1px solid var(--success)"; el.style.color = "var(--success)";
-    el.textContent = "✅ Gemini 1.5 Flash aktywne — analiza zdjęć włączona";
-    document.getElementById("apiKeyInput").value = GEMINI_API_KEY.slice(0, 8) + "…" + GEMINI_API_KEY.slice(-4);
+    var provName = AI_PROVIDER === "openai" ? "OpenAI GPT-4o-mini" : "Gemini 1.5 Flash";
+    el.textContent = "✅ " + provName + " aktywne — analiza zdjęć włączona";
+    document.getElementById("apiKeyInput").value = activeKey.slice(0, 8) + "…" + activeKey.slice(-4);
   } else {
     el.style.background = "var(--error-bg)"; el.style.border = "1px solid var(--error)"; el.style.color = "var(--error)";
-    el.textContent = "❌ Brak klucza Gemini API — dane wpisz ręcznie";
+    el.textContent = "❌ Brak klucza API — dane wpisz ręcznie";
   }
+  // Style provider buttons
+  var btnO = document.getElementById("btnProvOpenAI");
+  var btnG = document.getElementById("btnProvGemini");
+  if (btnO && btnG) {
+    if (AI_PROVIDER === "openai") {
+      btnO.style.background = "var(--accent)"; btnO.style.color = "#fff"; btnO.style.border = "none";
+      btnG.style.background = "transparent"; btnG.style.color = "var(--text2)"; btnG.style.border = "1px solid var(--border)";
+    } else {
+      btnG.style.background = "var(--accent)"; btnG.style.color = "#fff"; btnG.style.border = "none";
+      btnO.style.background = "transparent"; btnO.style.color = "var(--text2)"; btnO.style.border = "1px solid var(--border)";
+    }
+  }
+  var keyInput = document.getElementById("apiKeyInput");
+  if (keyInput && !activeKey) keyInput.placeholder = AI_PROVIDER === "openai" ? "sk-proj-..." : "AIzaSy...";
   updateWorkerStatus();
 }
 
@@ -420,10 +447,25 @@ function updateWorkerStatus() {
 function saveApiKey() {
   var key = document.getElementById("apiKeyInput").value.trim();
   if (!key || key.length < 10) { showToast("Wklej prawidłowy klucz API", "error"); return; }
-  localStorage.setItem("GEMINI_API_KEY", key);
-  GEMINI_API_KEY = key; HAS_AI_KEY = true;
+  if (AI_PROVIDER === "openai") {
+    localStorage.setItem("OPENAI_API_KEY", key);
+    OPENAI_API_KEY = key;
+  } else {
+    localStorage.setItem("GEMINI_API_KEY", key);
+    GEMINI_API_KEY = key;
+  }
+  HAS_AI_KEY = true;
   updateApiStatus();
-  showToast("✅ Klucz Gemini zapisany!", "success");
+  showToast("✅ Klucz " + (AI_PROVIDER === "openai" ? "OpenAI" : "Gemini") + " zapisany!", "success");
+}
+
+function switchProvider(prov) {
+  AI_PROVIDER = prov;
+  localStorage.setItem("AI_PROVIDER", prov);
+  var activeKey = prov === "openai" ? OPENAI_API_KEY : GEMINI_API_KEY;
+  document.getElementById("apiKeyInput").value = activeKey ? activeKey.slice(0, 8) + "…" + activeKey.slice(-4) : "";
+  document.getElementById("apiKeyInput").placeholder = prov === "openai" ? "sk-proj-..." : "AIzaSy...";
+  updateApiStatus();
 }
 
 function saveWorkerUrl() {
@@ -436,45 +478,70 @@ function saveWorkerUrl() {
 }
 
 async function testApiKey() {
-  var key = GEMINI_API_KEY || document.getElementById("apiKeyInput").value.trim();
+  var key = AI_PROVIDER === "openai" ? (OPENAI_API_KEY || document.getElementById("apiKeyInput").value.trim()) : (GEMINI_API_KEY || document.getElementById("apiKeyInput").value.trim());
   if (!key || key.length < 10) { showToast("Najpierw wklej i zapisz klucz API", "error"); return; }
   var btn = document.getElementById("btnTestKey");
   var result = document.getElementById("testResult");
   btn.disabled = true; btn.textContent = "⏳...";
   result.style.padding = "8px 12px";
   result.style.background = "var(--surface2)"; result.style.border = "1px solid var(--border)"; result.style.color = "var(--text2)";
-  result.textContent = "⏳ Testuję połączenie z Gemini 1.5 Flash...";
+  var provName = AI_PROVIDER === "openai" ? "OpenAI GPT-4o-mini" : "Gemini 1.5 Flash";
+  result.textContent = "⏳ Testuję połączenie z " + provName + "...";
+
   try {
-    var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + key;
-    var res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: "Odpowiedz jednym słowem: działa" }] }],
-        generationConfig: { temperature: 0, maxOutputTokens: 10 }
-      })
-    });
-    if (res.ok) {
-      var data = await res.json();
-      var text = "";
-      try { text = data.candidates[0].content.parts[0].text; } catch(e) {}
-      result.style.background = "var(--success-bg)"; result.style.border = "1px solid var(--success)"; result.style.color = "var(--success)";
-      result.textContent = "✅ Klucz działa! Gemini odpowiedział: \"" + text.trim().slice(0, 50) + "\"";
-    } else if (res.status === 429) {
-      result.style.background = "#422006"; result.style.border = "1px solid var(--warning)"; result.style.color = "var(--warning)";
-      result.textContent = "⚠️ Klucz jest poprawny, ale przekroczono limit. Poczekaj 1-2 minuty i spróbuj ponownie.";
-    } else if (res.status === 403) {
-      var errData = await res.text().catch(function() { return ""; });
-      result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
-      result.innerHTML = "❌ Błąd 403: Brak dostępu. <b>Włącz Generative Language API</b> w Google Cloud Console → " +
-        "<a href='https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com' target='_blank' style='color:var(--accent);text-decoration:underline'>kliknij tutaj</a>";
-    } else if (res.status === 404) {
-      result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
-      result.textContent = "❌ Błąd 404: Model niedostępny. Upewnij się, że Generative Language API jest włączone w projekcie Google Cloud.";
+    var res, data, text;
+    if (AI_PROVIDER === "openai") {
+      res = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [{ role: "user", content: "Odpowiedz jednym słowem: działa" }],
+          temperature: 0, max_tokens: 10
+        })
+      });
+      if (res.ok) {
+        data = await res.json();
+        text = ""; try { text = data.choices[0].message.content; } catch(e) {}
+        result.style.background = "var(--success-bg)"; result.style.border = "1px solid var(--success)"; result.style.color = "var(--success)";
+        result.textContent = '✅ Klucz działa! GPT-4o-mini odpowiedział: "' + text.trim().slice(0, 50) + '"';
+      } else if (res.status === 401) {
+        result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
+        result.textContent = "❌ Błąd 401: Klucz jest nieprawidłowy. Sprawdź czy skopiowałeś cały klucz (zaczyna się od sk-).";
+      } else if (res.status === 429) {
+        result.style.background = "#422006"; result.style.border = "1px solid var(--warning)"; result.style.color = "var(--warning)";
+        result.textContent = "⚠️ Klucz poprawny, ale przekroczono limit lub brak środków. Sprawdź billing na platform.openai.com.";
+      } else if (res.status === 403) {
+        result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
+        result.textContent = "❌ Błąd 403: Klucz nie ma uprawnień. Sprawdź Permissions na platform.openai.com/api-keys.";
+      } else {
+        var errText = await res.text().catch(function() { return ""; });
+        result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
+        result.textContent = "❌ Błąd " + res.status + ": " + errText.slice(0, 150);
+      }
     } else {
-      var errText = await res.text().catch(function() { return ""; });
-      result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
-      result.textContent = "❌ Błąd " + res.status + ": " + errText.slice(0, 150);
+      // Gemini test
+      res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + key, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: "Odpowiedz jednym słowem: działa" }] }],
+          generationConfig: { temperature: 0, maxOutputTokens: 10 }
+        })
+      });
+      if (res.ok) {
+        data = await res.json();
+        text = ""; try { text = data.candidates[0].content.parts[0].text; } catch(e) {}
+        result.style.background = "var(--success-bg)"; result.style.border = "1px solid var(--success)"; result.style.color = "var(--success)";
+        result.textContent = '✅ Klucz działa! Gemini odpowiedział: "' + text.trim().slice(0, 50) + '"';
+      } else if (res.status === 429) {
+        result.style.background = "#422006"; result.style.border = "1px solid var(--warning)"; result.style.color = "var(--warning)";
+        result.textContent = "⚠️ Klucz poprawny, ale przekroczono limit. Poczekaj 1-2 minuty.";
+      } else {
+        var errText = await res.text().catch(function() { return ""; });
+        result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
+        result.textContent = "❌ Błąd " + res.status + ": " + errText.slice(0, 150);
+      }
     }
   } catch(e) {
     result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
@@ -638,6 +705,65 @@ function readExifGps(file) {
 // ╚══════════════════════════════════════════════════════════════════╝
 var GEMINI_PROMPT = 'Jesteś profesjonalnym asystentem inwentaryzacji cmentarzy. Spójrz na zdjęcie nagrobka i:\n\n1. Wyodrębnij Imię i Nazwisko (pomiń modlitwy, cytaty, ŚP, Ave Maria, R.I.P., \"Tu spoczywa\" itp.). Jeśli jest kilka osób, weź pierwszą.\n2. Wyodrębnij datę urodzenia i zgonu (zwróć tylko lata, np. \"1920-1985\"). Jeśli pełne daty — też zamień na lata.\n3. Odczytaj współrzędne GPS ze stempla/napisu na zdjęciu (np. 52°12\'56\" N, 21°3\'55\" E albo 42°21\'53\", 31°6\'1\") i przelicz je na format dziesiętny (np. 52.2155). Jeśli brak liter kierunku (N/S/E/W), załóż N dla pierwszej i E dla drugiej.\n4. Jeśli nie widzisz współrzędnych GPS na zdjęciu, zwróć puste stringi dla lat i lng.\n\nZwróć wynik WYŁĄCZNIE jako czysty JSON (bez markdown, bez ```json):\n{"nazwa": "Imię Nazwisko", "daty": "RRRR-RRRR", "lat": "52.2155", "lng": "21.0653"}';
 
+async function analyzeWithAI(dataUrl) {
+  if (AI_PROVIDER === "openai") {
+    return await analyzeWithOpenAI(dataUrl);
+  } else {
+    return await analyzeWithGemini(dataUrl);
+  }
+}
+
+// ── OpenAI GPT-4o-mini ──────────────────────────────────────────
+async function analyzeWithOpenAI(dataUrl) {
+  var res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + OPENAI_API_KEY
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "Odpowiadaj WYŁĄCZNIE czystym JSON, bez markdown, bez ```." },
+        { role: "user", content: [
+          { type: "text", text: GEMINI_PROMPT },
+          { type: "image_url", image_url: { url: dataUrl, detail: "low" } }
+        ]}
+      ],
+      temperature: 0.1,
+      max_tokens: 512
+    })
+  });
+
+  if (res.status === 429) {
+    if (!analyzeWithOpenAI._retries) analyzeWithOpenAI._retries = 0;
+    analyzeWithOpenAI._retries++;
+    if (analyzeWithOpenAI._retries <= 2) {
+      var waitSec = analyzeWithOpenAI._retries * 5;
+      console.log("OpenAI 429 — czekam " + waitSec + "s i ponawiam (próba " + analyzeWithOpenAI._retries + "/2)...");
+      await new Promise(function(r) { setTimeout(r, waitSec * 1000); });
+      var result = await analyzeWithOpenAI(dataUrl);
+      analyzeWithOpenAI._retries = 0;
+      return result;
+    }
+    analyzeWithOpenAI._retries = 0;
+    throw new Error("OpenAI API: Przekroczono limit zapytań (429). Poczekaj minutę i spróbuj ponownie.");
+  }
+  if (!res.ok) {
+    var errText = await res.text().catch(function() { return ""; });
+    throw new Error("OpenAI API " + res.status + ": " + errText.slice(0, 300));
+  }
+
+  var data = await res.json();
+  var text = "";
+  try { text = data.choices[0].message.content; } catch(e) {
+    throw new Error("OpenAI nie zwrócił odpowiedzi");
+  }
+  console.log("OpenAI raw response:", text);
+  return parseAIResponse(text);
+}
+
+// ── Gemini ───────────────────────────────────────────────────────
 async function analyzeWithGemini(dataUrl) {
   var base64 = dataUrl.replace(/^data:image\/[^;]+;base64,/, "");
   var mimeType = dataUrl.match(/^data:(image\/[^;]+);/);
@@ -649,16 +775,11 @@ async function analyzeWithGemini(dataUrl) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      contents: [{
-        parts: [
-          { text: GEMINI_PROMPT },
-          { inline_data: { mime_type: mimeType, data: base64 } }
-        ]
-      }],
-      generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 512
-      },
+      contents: [{ parts: [
+        { text: GEMINI_PROMPT },
+        { inline_data: { mime_type: mimeType, data: base64 } }
+      ]}],
+      generationConfig: { temperature: 0.1, maxOutputTokens: 512 },
       safetySettings: [
         { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
         { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
@@ -669,19 +790,18 @@ async function analyzeWithGemini(dataUrl) {
   });
 
   if (res.status === 429) {
-    // Rate limit — czekaj i spróbuj ponownie (max 2 retry)
     if (!analyzeWithGemini._retries) analyzeWithGemini._retries = 0;
     analyzeWithGemini._retries++;
     if (analyzeWithGemini._retries <= 2) {
       var waitSec = analyzeWithGemini._retries * 5;
-      console.log("Gemini 429 — czekam " + waitSec + "s i ponawiam (próba " + analyzeWithGemini._retries + "/2)...");
+      console.log("Gemini 429 — czekam " + waitSec + "s...");
       await new Promise(function(r) { setTimeout(r, waitSec * 1000); });
       var result = await analyzeWithGemini(dataUrl);
       analyzeWithGemini._retries = 0;
       return result;
     }
     analyzeWithGemini._retries = 0;
-    throw new Error("Gemini API: Przekroczono limit zapytań (429). Poczekaj minutę i spróbuj ponownie.");
+    throw new Error("Gemini API: Przekroczono limit zapytań (429).");
   }
   if (!res.ok) {
     var errText = await res.text().catch(function() { return ""; });
@@ -689,37 +809,32 @@ async function analyzeWithGemini(dataUrl) {
   }
 
   var data = await res.json();
-
-  // Wyciągnij tekst odpowiedzi
   var text = "";
-  try {
-    text = data.candidates[0].content.parts[0].text;
-  } catch(e) {
+  try { text = data.candidates[0].content.parts[0].text; } catch(e) {
     throw new Error("Gemini nie zwrócił odpowiedzi");
   }
-
-  // Parsuj JSON z odpowiedzi (Gemini może dodać ```json ... ```)
   console.log("Gemini raw response:", text);
+  return parseAIResponse(text);
+}
+
+// ── Wspólny parser odpowiedzi AI ─────────────────────────────────
+function parseAIResponse(text) {
   var jsonStr = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
   var parsed;
   try {
     parsed = JSON.parse(jsonStr);
   } catch(e) {
-    // Spróbuj wyciągnąć JSON z tekstu
     var jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      try {
-        parsed = JSON.parse(jsonMatch[0]);
-      } catch(e2) {
-        console.error("Nie udało się sparsować JSON z odpowiedzi Gemini:", text);
-        throw new Error("Gemini nie zwrócił prawidłowego JSON: " + text.slice(0, 200));
+      try { parsed = JSON.parse(jsonMatch[0]); } catch(e2) {
+        console.error("Nie udało się sparsować JSON:", text);
+        throw new Error("AI nie zwróciło prawidłowego JSON: " + text.slice(0, 200));
       }
     } else {
-      console.error("Brak JSON w odpowiedzi Gemini:", text);
-      throw new Error("Gemini nie zwrócił prawidłowego JSON: " + text.slice(0, 200));
+      console.error("Brak JSON w odpowiedzi:", text);
+      throw new Error("AI nie zwróciło prawidłowego JSON: " + text.slice(0, 200));
     }
   }
-
   return {
     nazwa: parsed.nazwa || parsed.imie_nazwisko || parsed.name || "",
     daty: parsed.daty || parsed["rok_urodzenia-zgonu"] || parsed.dates || "",
@@ -893,7 +1008,7 @@ async function startProcessing() {
 
   // Analiza AI per zdjęcie
   if (!HAS_AI_KEY) {
-    setStep("stepOcr", "done", "AI pominięte (brak klucza Gemini)");
+    setStep("stepOcr", "done", "AI pominięte (brak klucza API)");
     for (var i = 0; i < photos.length; i++) {
       var gps = gpsPerPhoto[i];
       records.push({
@@ -909,14 +1024,16 @@ async function startProcessing() {
     for (var j = 0; j < photos.length; j++) {
       // Opóźnienie 3s między zdjęciami (poza pierwszym) aby nie przekroczyć limitu
       if (j > 0) {
+        var aiName = AI_PROVIDER === "openai" ? "GPT-4o-mini" : "Gemini";
         setStep("stepOcr", "active", "⏳ Czekam 3s przed zdjęciem " + (j+1) + "/" + photos.length + "...");
         await new Promise(function(r) { setTimeout(r, 3000); });
       }
+      var aiName = AI_PROVIDER === "openai" ? "GPT-4o-mini" : "Gemini";
       photos[j].status = "processing"; renderGrid();
-      setStep("stepOcr", "active", "🤖 Gemini analizuje zdjęcie " + (j+1) + "/" + photos.length + "...");
+      setStep("stepOcr", "active", "🤖 " + aiName + " analizuje zdjęcie " + (j+1) + "/" + photos.length + "...");
       var aiResult = null;
       try {
-        aiResult = await analyzeWithGemini(photos[j].dataUrl);
+        aiResult = await analyzeWithAI(photos[j].dataUrl);
         photos[j].status = "done";
         aiOk++;
       } catch(e) {
@@ -947,8 +1064,9 @@ async function startProcessing() {
         info: "", ocrRaw: rawResp, sendStatus: "ready"
       });
     }
+    var aiLabel = AI_PROVIDER === "openai" ? "GPT-4o-mini" : "Gemini";
     setStep("stepOcr", aiOk > 0 ? "done" : "error",
-      aiOk > 0 ? "🤖 Gemini przeanalizował " + aiOk + "/" + photos.length + " zdjęć" : "Gemini nie rozpoznał danych");
+      aiOk > 0 ? "🤖 " + aiLabel + " przeanalizował " + aiOk + "/" + photos.length + " zdjęć" : aiLabel + " nie rozpoznał danych");
   }
 
   setStep("stepReady", "done", records.length + " rekordów gotowych do sprawdzenia");
