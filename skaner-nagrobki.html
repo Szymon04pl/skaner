@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>📸 Skaner Nagrobków</title>
-<script src="https://cdn.jsdelivr.net/npm/exif-js@2.3.0/exif.min.js"></script>
+<script src="https://unpkg.com/exif-js@2.3.0/exif.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -540,7 +540,7 @@ async function analyzeWithGemini(dataUrl) {
   var mimeType = dataUrl.match(/^data:(image\/[^;]+);/);
   mimeType = mimeType ? mimeType[1] : "image/jpeg";
 
-  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + GEMINI_API_KEY;
+  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=" + GEMINI_API_KEY;
 
   var res = await fetch(url, {
     method: "POST",
@@ -565,6 +565,21 @@ async function analyzeWithGemini(dataUrl) {
     })
   });
 
+  if (res.status === 429) {
+    // Rate limit — czekaj i spróbuj ponownie (max 2 retry)
+    if (!analyzeWithGemini._retries) analyzeWithGemini._retries = 0;
+    analyzeWithGemini._retries++;
+    if (analyzeWithGemini._retries <= 2) {
+      var waitSec = analyzeWithGemini._retries * 5;
+      console.log("Gemini 429 — czekam " + waitSec + "s i ponawiam (próba " + analyzeWithGemini._retries + "/2)...");
+      await new Promise(function(r) { setTimeout(r, waitSec * 1000); });
+      var result = await analyzeWithGemini(dataUrl);
+      analyzeWithGemini._retries = 0;
+      return result;
+    }
+    analyzeWithGemini._retries = 0;
+    throw new Error("Gemini API: Przekroczono limit zapytań (429). Poczekaj minutę i spróbuj ponownie.");
+  }
   if (!res.ok) {
     var errText = await res.text().catch(function() { return ""; });
     throw new Error("Gemini API " + res.status + ": " + errText.slice(0, 200));
@@ -789,6 +804,11 @@ async function startProcessing() {
     setStep("stepOcr", "active");
     var aiOk = 0;
     for (var j = 0; j < photos.length; j++) {
+      // Opóźnienie 3s między zdjęciami (poza pierwszym) aby nie przekroczyć limitu
+      if (j > 0) {
+        setStep("stepOcr", "active", "⏳ Czekam 3s przed zdjęciem " + (j+1) + "/" + photos.length + "...");
+        await new Promise(function(r) { setTimeout(r, 3000); });
+      }
       photos[j].status = "processing"; renderGrid();
       setStep("stepOcr", "active", "🤖 Gemini analizuje zdjęcie " + (j+1) + "/" + photos.length + "...");
       var aiResult = null;
