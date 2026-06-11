@@ -226,21 +226,20 @@
 
     <details style="margin-bottom:12px">
       <summary style="font-size:14px;font-weight:600;cursor:pointer;color:var(--text);margin-bottom:10px">
-        📋 Jak uzyskać klucz Google Vision API
+        📋 Jak uzyskać klucz Gemini API (za darmo)
       </summary>
       <ol style="font-size:13px;color:var(--text2);padding-left:20px;line-height:1.8">
-        <li>Wejdź na <a href="https://console.cloud.google.com/" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">console.cloud.google.com</a></li>
+        <li>Wejdź na <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">aistudio.google.com/apikey</a></li>
         <li>Zaloguj się kontem Google</li>
-        <li>Kliknij <b style="color:var(--text)">„Select a project"</b> → <b style="color:var(--text)">„New Project"</b> (np. <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">nagrobki-ocr</code>)</li>
-        <li><b style="color:var(--text)">APIs & Services → Library</b> → szukaj <b style="color:var(--text)">„Cloud Vision API"</b> → <b style="color:var(--text)">Enable</b></li>
-        <li><b style="color:var(--text)">APIs & Services → Credentials</b> → <b style="color:var(--text)">„+ Create Credentials" → „API key"</b></li>
-        <li>Skopiuj klucz (<code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:11px">AIzaSy...</code>)</li>
+        <li>Kliknij <b style="color:var(--text)">„Create API key"</b></li>
+        <li>Wybierz projekt (lub utwórz nowy)</li>
+        <li>Skopiuj wygenerowany klucz (<code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:11px">AIzaSy...</code>)</li>
       </ol>
-      <p style="font-size:12px;color:var(--text2);margin-top:8px">💰 Pierwsze 1000 zapytań/miesiąc za darmo + $300 kredytów na start</p>
+      <p style="font-size:12px;color:var(--text2);margin-top:8px">💰 <b style="color:var(--success)">Gemini 1.5 Flash jest darmowy</b> — 15 zapytań/minutę, 1500/dzień</p>
     </details>
 
     <div style="margin-bottom:12px">
-      <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:4px">🔑 Klucz Google Vision API:</label>
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:4px">🤖 Klucz Gemini API:</label>
       <div style="display:flex;gap:8px">
         <input type="text" id="apiKeyInput" placeholder="AIzaSy..." style="flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:monospace;font-size:13px;outline:none">
         <button class="btn btn-primary btn-sm" onclick="saveApiKey()" style="width:auto;padding:10px 16px">💾</button>
@@ -289,7 +288,7 @@
       </div>
       <div class="step" id="stepOcr">
         <div class="step-icon" id="stepOcrIcon">2</div>
-        <span id="stepOcrText">Analizuję tekst (OCR)...</span>
+        <span id="stepOcrText">🤖 Analiza AI (Gemini)...</span>
       </div>
       <div class="step" id="stepReady">
         <div class="step-icon" id="stepReadyIcon">3</div>
@@ -323,10 +322,10 @@
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  KONFIGURACJA                                                     ║
 // ╚══════════════════════════════════════════════════════════════════╝
-var GOOGLE_VISION_API_KEY = localStorage.getItem("GOOGLE_VISION_API_KEY") || "";
+var GEMINI_API_KEY = localStorage.getItem("GEMINI_API_KEY") || "";
 var CLOUDFLARE_WORKER_URL = localStorage.getItem("CLOUDFLARE_WORKER_URL") || "";
 var GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVqkv-4-YJNC5UihGVzGcW2BaQ0J9z4XcySKglc2BFVEz1VCvVNRQEjhL17jK8nSo/exec";
-var HAS_VISION_KEY = !!GOOGLE_VISION_API_KEY;
+var HAS_AI_KEY = !!GEMINI_API_KEY;
 
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  STAN                                                             ║
@@ -340,13 +339,13 @@ var nextId = 0;
 // ╚══════════════════════════════════════════════════════════════════╝
 function updateApiStatus() {
   var el = document.getElementById("apiStatus");
-  if (HAS_VISION_KEY) {
+  if (HAS_AI_KEY) {
     el.style.background = "var(--success-bg)"; el.style.border = "1px solid var(--success)"; el.style.color = "var(--success)";
-    el.textContent = "✅ OCR włączony";
-    document.getElementById("apiKeyInput").value = GOOGLE_VISION_API_KEY.slice(0, 8) + "…" + GOOGLE_VISION_API_KEY.slice(-4);
+    el.textContent = "✅ Gemini AI aktywne — analiza zdjęć włączona";
+    document.getElementById("apiKeyInput").value = GEMINI_API_KEY.slice(0, 8) + "…" + GEMINI_API_KEY.slice(-4);
   } else {
     el.style.background = "var(--error-bg)"; el.style.border = "1px solid var(--error)"; el.style.color = "var(--error)";
-    el.textContent = "❌ Brak klucza Vision API — dane wpisz ręcznie";
+    el.textContent = "❌ Brak klucza Gemini API — dane wpisz ręcznie";
   }
   updateWorkerStatus();
 }
@@ -366,10 +365,10 @@ function updateWorkerStatus() {
 function saveApiKey() {
   var key = document.getElementById("apiKeyInput").value.trim();
   if (!key || key.length < 10) { showToast("Wklej prawidłowy klucz API", "error"); return; }
-  localStorage.setItem("GOOGLE_VISION_API_KEY", key);
-  GOOGLE_VISION_API_KEY = key; HAS_VISION_KEY = true;
+  localStorage.setItem("GEMINI_API_KEY", key);
+  GEMINI_API_KEY = key; HAS_AI_KEY = true;
   updateApiStatus();
-  showToast("✅ Klucz Vision zapisany!", "success");
+  showToast("✅ Klucz Gemini zapisany!", "success");
 }
 
 function saveWorkerUrl() {
@@ -485,7 +484,7 @@ function resetSteps() {
     document.getElementById(id + "Icon").textContent = String(i + 1);
   });
   document.getElementById("stepGpsText").textContent = "Odczytuję GPS z EXIF...";
-  document.getElementById("stepOcrText").textContent = "Analizuję tekst (OCR)...";
+  document.getElementById("stepOcrText").textContent = "🤖 Analiza AI (Gemini)...";
   document.getElementById("stepReadyText").textContent = "Gotowe do zapisu";
 }
 
@@ -532,22 +531,71 @@ function readExifGps(file) {
 }
 
 // ╔══════════════════════════════════════════════════════════════════╗
-// ║  OCR                                                              ║
+// ║  GEMINI AI — analiza zdjęcia (tekst + GPS)                        ║
 // ╚══════════════════════════════════════════════════════════════════╝
-function runOcr(base64) {
-  var clean = base64.replace(/^data:image\/[^;]+;base64,/, "");
-  var url = "https://vision.googleapis.com/v1/images:annotate?key=" + GOOGLE_VISION_API_KEY;
-  return fetch(url, {
+var GEMINI_PROMPT = 'Jesteś profesjonalnym asystentem inwentaryzacji cmentarzy. Spójrz na zdjęcie nagrobka i:\n\n1. Wyodrębnij Imię i Nazwisko (pomiń modlitwy, cytaty, ŚP, Ave Maria, R.I.P., \"Tu spoczywa\" itp.). Jeśli jest kilka osób, weź pierwszą.\n2. Wyodrębnij datę urodzenia i zgonu (zwróć tylko lata, np. \"1920-1985\"). Jeśli pełne daty — też zamień na lata.\n3. Odczytaj współrzędne GPS ze stempla/napisu na zdjęciu (np. 52°12\'56\" N, 21°3\'55\" E albo 42°21\'53\", 31°6\'1\") i przelicz je na format dziesiętny (np. 52.2155). Jeśli brak liter kierunku (N/S/E/W), załóż N dla pierwszej i E dla drugiej.\n4. Jeśli nie widzisz współrzędnych GPS na zdjęciu, zwróć puste stringi dla lat i lng.\n\nZwróć wynik WYŁĄCZNIE jako czysty JSON (bez markdown, bez ```json):\n{"nazwa": "Imię Nazwisko", "daty": "RRRR-RRRR", "lat": "52.2155", "lng": "21.0653"}';
+
+async function analyzeWithGemini(dataUrl) {
+  var base64 = dataUrl.replace(/^data:image\/[^;]+;base64,/, "");
+  var mimeType = dataUrl.match(/^data:(image\/[^;]+);/);
+  mimeType = mimeType ? mimeType[1] : "image/jpeg";
+
+  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + GEMINI_API_KEY;
+
+  var res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ requests: [{ image: { content: clean }, features: [{ type: "TEXT_DETECTION", maxResults: 1 }] }] }),
-  }).then(function(res) {
-    if (!res.ok) throw new Error("Vision API " + res.status);
-    return res.json();
-  }).then(function(data) {
-    var ann = data.responses && data.responses[0] && data.responses[0].textAnnotations;
-    return (ann && ann[0] && ann[0].description) || "";
+    body: JSON.stringify({
+      contents: [{
+        parts: [
+          { text: GEMINI_PROMPT },
+          { inline_data: { mime_type: mimeType, data: base64 } }
+        ]
+      }],
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 512
+      }
+    })
   });
+
+  if (!res.ok) {
+    var errText = await res.text().catch(function() { return ""; });
+    throw new Error("Gemini API " + res.status + ": " + errText.slice(0, 200));
+  }
+
+  var data = await res.json();
+
+  // Wyciągnij tekst odpowiedzi
+  var text = "";
+  try {
+    text = data.candidates[0].content.parts[0].text;
+  } catch(e) {
+    throw new Error("Gemini nie zwrócił odpowiedzi");
+  }
+
+  // Parsuj JSON z odpowiedzi (Gemini może dodać ```json ... ```)
+  var jsonStr = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+  var parsed;
+  try {
+    parsed = JSON.parse(jsonStr);
+  } catch(e) {
+    // Spróbuj wyciągnąć JSON z tekstu
+    var jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      parsed = JSON.parse(jsonMatch[0]);
+    } else {
+      throw new Error("Gemini nie zwrócił prawidłowego JSON: " + text.slice(0, 200));
+    }
+  }
+
+  return {
+    nazwa: parsed.nazwa || parsed.imie_nazwisko || parsed.name || "",
+    daty: parsed.daty || parsed["rok_urodzenia-zgonu"] || parsed.dates || "",
+    lat: parsed.lat || "",
+    lng: parsed.lng || "",
+    rawResponse: text
+  };
 }
 
 // ╔══════════════════════════════════════════════════════════════════╗
@@ -712,9 +760,9 @@ async function startProcessing() {
   if (sharedGps) setStep("stepGps", "done", "GPS z EXIF: " + sharedGps.lat + ", " + sharedGps.lng);
   else setStep("stepGps", "done", "Brak GPS w EXIF — szukam w tekście OCR");
 
-  // OCR per zdjęcie
-  if (!HAS_VISION_KEY) {
-    setStep("stepOcr", "done", "OCR pominięty (brak klucza)");
+  // Analiza AI per zdjęcie
+  if (!HAS_AI_KEY) {
+    setStep("stepOcr", "done", "AI pominięte (brak klucza Gemini)");
     for (var i = 0; i < photos.length; i++) {
       var gps = gpsPerPhoto[i];
       records.push({
@@ -726,35 +774,45 @@ async function startProcessing() {
     }
   } else {
     setStep("stepOcr", "active");
+    var aiOk = 0;
     for (var j = 0; j < photos.length; j++) {
       photos[j].status = "processing"; renderGrid();
-      setStep("stepOcr", "active", "OCR zdjęcie " + (j+1) + "/" + photos.length + "...");
-      var ocrText = "";
+      setStep("stepOcr", "active", "🤖 Gemini analizuje zdjęcie " + (j+1) + "/" + photos.length + "...");
+      var aiResult = null;
       try {
-        ocrText = await runOcr(photos[j].dataUrl);
+        aiResult = await analyzeWithGemini(photos[j].dataUrl);
         photos[j].status = "done";
+        aiOk++;
       } catch(e) {
-        console.error(e);
+        console.error("Gemini error for photo " + (j+1) + ":", e);
         photos[j].status = "error";
       }
       renderGrid();
+
       var gps = gpsPerPhoto[j];
-      // Jeśli brak GPS z EXIF, szukaj współrzędnych w tekście OCR
-      if (!gps && ocrText) {
-        var ocrGps = parseGpsFromText(ocrText);
-        if (ocrGps) gps = ocrGps;
+      var nazwa = "", daty = "", aiLat = "", aiLng = "", rawResp = "";
+
+      if (aiResult) {
+        nazwa = aiResult.nazwa || "";
+        daty = aiResult.daty || "";
+        aiLat = aiResult.lat ? String(aiResult.lat) : "";
+        aiLng = aiResult.lng ? String(aiResult.lng) : "";
+        rawResp = aiResult.rawResponse || "";
       }
-      var parsed = ocrText ? parseData(cleanText(ocrText)) : { imie: "", nazwisko: "", daty: "" };
-      var fullName = [parsed.imie, parsed.nazwisko].filter(Boolean).join(" ");
+
+      // GPS: priorytet EXIF > Gemini AI
+      var finalLat = gps ? String(gps.lat) : aiLat;
+      var finalLng = gps ? String(gps.lng) : aiLng;
+
       records.push({
         id: ++nextId, photoId: photos[j].id, dataUrl: photos[j].dataUrl,
-        nazwa: fullName, daty: parsed.daty, fileName: photos[j].file.name,
-        lat: gps ? String(gps.lat) : "", lng: gps ? String(gps.lng) : "",
-        info: "", ocrRaw: ocrText, sendStatus: "ready"
+        nazwa: nazwa, daty: daty, fileName: photos[j].file.name,
+        lat: finalLat, lng: finalLng,
+        info: "", ocrRaw: rawResp, sendStatus: "ready"
       });
     }
-    var ocrOk = records.filter(function(r) { return r.ocrRaw; }).length;
-    setStep("stepOcr", ocrOk > 0 ? "done" : "error", ocrOk > 0 ? "Tekst z " + ocrOk + "/" + photos.length + " zdjęć" : "Nie rozpoznano tekstu");
+    setStep("stepOcr", aiOk > 0 ? "done" : "error",
+      aiOk > 0 ? "🤖 Gemini przeanalizował " + aiOk + "/" + photos.length + " zdjęć" : "Gemini nie rozpoznał danych");
   }
 
   setStep("stepReady", "done", records.length + " rekordów gotowych do sprawdzenia");
@@ -816,13 +874,13 @@ function renderRecords() {
     if (rec.ocrRaw) {
       var det = document.createElement("details"); det.style.marginBottom = "12px";
       var sum = document.createElement("summary"); sum.style.cssText = "font-size:12px;color:var(--text2);cursor:pointer;margin-bottom:6px";
-      sum.textContent = "🔍 Surowy tekst OCR"; det.appendChild(sum);
+      sum.textContent = "🤖 Odpowiedź Gemini AI"; det.appendChild(sum);
       var raw = document.createElement("div"); raw.className = "raw-text"; raw.textContent = rec.ocrRaw; det.appendChild(raw);
       body.appendChild(det);
-    } else if (HAS_VISION_KEY) {
+    } else if (HAS_AI_KEY) {
       var note = document.createElement("div");
       note.style.cssText = "background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:12px;color:var(--warning);text-align:center;margin-bottom:12px";
-      note.textContent = "⚠️ Nie rozpoznano tekstu z tego zdjęcia";
+      note.textContent = "⚠️ Gemini nie rozpoznał danych z tego zdjęcia";
       body.appendChild(note);
     }
 
