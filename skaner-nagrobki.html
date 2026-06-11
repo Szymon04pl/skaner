@@ -540,7 +540,7 @@ async function analyzeWithGemini(dataUrl) {
   var mimeType = dataUrl.match(/^data:(image\/[^;]+);/);
   mimeType = mimeType ? mimeType[1] : "image/jpeg";
 
-  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + GEMINI_API_KEY;
+  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + GEMINI_API_KEY;
 
   var res = await fetch(url, {
     method: "POST",
@@ -555,7 +555,13 @@ async function analyzeWithGemini(dataUrl) {
       generationConfig: {
         temperature: 0.1,
         maxOutputTokens: 512
-      }
+      },
+      safetySettings: [
+        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+      ]
     })
   });
 
@@ -575,6 +581,7 @@ async function analyzeWithGemini(dataUrl) {
   }
 
   // Parsuj JSON z odpowiedzi (Gemini może dodać ```json ... ```)
+  console.log("Gemini raw response:", text);
   var jsonStr = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
   var parsed;
   try {
@@ -583,8 +590,14 @@ async function analyzeWithGemini(dataUrl) {
     // Spróbuj wyciągnąć JSON z tekstu
     var jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      parsed = JSON.parse(jsonMatch[0]);
+      try {
+        parsed = JSON.parse(jsonMatch[0]);
+      } catch(e2) {
+        console.error("Nie udało się sparsować JSON z odpowiedzi Gemini:", text);
+        throw new Error("Gemini nie zwrócił prawidłowego JSON: " + text.slice(0, 200));
+      }
     } else {
+      console.error("Brak JSON w odpowiedzi Gemini:", text);
       throw new Error("Gemini nie zwrócił prawidłowego JSON: " + text.slice(0, 200));
     }
   }
