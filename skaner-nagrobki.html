@@ -226,16 +226,69 @@
 
     <details style="margin-bottom:12px">
       <summary style="font-size:14px;font-weight:600;cursor:pointer;color:var(--text);margin-bottom:10px">
-        📋 Jak uzyskać klucz Gemini API (za darmo)
+        📋 Jak uzyskać klucz Gemini API (za darmo) — SZCZEGÓŁOWA INSTRUKCJA
       </summary>
-      <ol style="font-size:13px;color:var(--text2);padding-left:20px;line-height:1.8">
-        <li>Wejdź na <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">aistudio.google.com/apikey</a></li>
-        <li>Zaloguj się kontem Google</li>
-        <li>Kliknij <b style="color:var(--text)">„Create API key"</b></li>
-        <li>Wybierz projekt (lub utwórz nowy)</li>
-        <li>Skopiuj wygenerowany klucz (<code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:11px">AIzaSy...</code>)</li>
-      </ol>
-      <p style="font-size:12px;color:var(--text2);margin-top:8px">💰 <b style="color:var(--success)">Gemini 1.5 Flash jest darmowy</b> — 15 zapytań/minutę, 1500/dzień</p>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8">
+
+        <p style="margin:10px 0 6px;color:var(--warning);font-weight:600">⚠️ WAŻNE: Ta aplikacja używa modelu <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:11px">gemini-1.5-flash-latest</code>. Klucz musi mieć dostęp do tego modelu.</p>
+
+        <p style="margin:12px 0 6px;color:var(--text);font-weight:700;font-size:14px">KROK 1: Utwórz projekt Google Cloud</p>
+        <ol style="padding-left:20px;margin:0">
+          <li>Wejdź na <a href="https://console.cloud.google.com/" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">console.cloud.google.com</a></li>
+          <li>Zaloguj się kontem Google</li>
+          <li>U góry strony kliknij na <b style="color:var(--text)">nazwę projektu</b> (obok loga Google Cloud)</li>
+          <li>Kliknij <b style="color:var(--text)">„Nowy projekt"</b> (lub „New Project")</li>
+          <li>Nazwij go np. <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:11px">skaner-nagrobkow</code> i kliknij <b style="color:var(--text)">„Utwórz"</b></li>
+          <li>Poczekaj ~15 sekund aż projekt się utworzy, potem <b style="color:var(--text)">wybierz go</b> u góry</li>
+        </ol>
+
+        <p style="margin:16px 0 6px;color:var(--text);font-weight:700;font-size:14px">KROK 2: Włącz Generative Language API</p>
+        <ol style="padding-left:20px;margin:0">
+          <li>Wejdź na <a href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">tę stronę (Generative Language API)</a></li>
+          <li>Upewnij się, że <b style="color:var(--text)">u góry widnieje Twój nowy projekt</b></li>
+          <li>Kliknij niebieski przycisk <b style="color:var(--text)">„Włącz" / „Enable"</b></li>
+          <li>Poczekaj aż API się aktywuje (~30 sekund)</li>
+        </ol>
+
+        <p style="margin:16px 0 6px;color:var(--text);font-weight:700;font-size:14px">KROK 3: Utwórz klucz API w Google AI Studio</p>
+        <ol style="padding-left:20px;margin:0">
+          <li>Wejdź na <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">aistudio.google.com/apikey</a></li>
+          <li>Kliknij <b style="color:var(--text)">„Create API key"</b></li>
+          <li>Z listy wybierz <b style="color:var(--text)">projekt, który przed chwilą utworzyłeś</b> (np. „skaner-nagrobkow")</li>
+          <li>Kliknij <b style="color:var(--text)">„Create API key in existing project"</b></li>
+          <li>Skopiuj klucz — zaczyna się od <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:11px">AIzaSy...</code></li>
+        </ol>
+
+        <p style="margin:16px 0 6px;color:var(--text);font-weight:700;font-size:14px">KROK 4: Sprawdź czy klucz działa</p>
+        <ol style="padding-left:20px;margin:0">
+          <li>Wklej klucz w pole poniżej i kliknij 💾</li>
+          <li>Kliknij przycisk <b style="color:var(--text)">„🧪 Testuj klucz"</b> który pojawi się obok</li>
+          <li>Jeśli widzisz ✅ — klucz działa, możesz skanować</li>
+          <li>Jeśli widzisz ❌ — sprawdź czy:
+            <ul style="padding-left:16px;margin:4px 0">
+              <li>Klucz jest poprawnie skopiowany (bez spacji)</li>
+              <li>Generative Language API jest włączone (Krok 2)</li>
+              <li>Wybrałeś właściwy projekt przy tworzeniu klucza</li>
+              <li>Poczekaj 2-3 minuty — nowe klucze potrzebują czasu na aktywację</li>
+            </ul>
+          </li>
+        </ol>
+
+        <div style="margin:14px 0 8px;padding:10px 14px;border-radius:10px;background:var(--success-bg);border:1px solid var(--success)">
+          <p style="color:var(--success);font-weight:600;font-size:13px;margin:0">💰 Darmowe limity Gemini 1.5 Flash:</p>
+          <p style="color:var(--text2);font-size:12px;margin:4px 0 0">15 zapytań/minutę • 1500 zapytań/dzień • 1 milion tokenów/minutę</p>
+        </div>
+
+        <div style="margin:8px 0;padding:10px 14px;border-radius:10px;background:var(--error-bg);border:1px solid var(--error)">
+          <p style="color:var(--error);font-weight:600;font-size:13px;margin:0">❌ Najczęstsze problemy:</p>
+          <ul style="color:var(--text2);font-size:12px;margin:4px 0 0;padding-left:16px">
+            <li><b>429 Too Many Requests</b> — poczekaj 1-2 minuty i spróbuj ponownie (limit się resetuje)</li>
+            <li><b>403 Forbidden</b> — Generative Language API nie jest włączone (Krok 2)</li>
+            <li><b>400 Bad Request</b> — klucz jest uszkodzony lub zdjęcie za duże (maks ~20MB)</li>
+            <li><b>404 Not Found</b> — klucz nie ma dostępu do modelu (powtórz Krok 2)</li>
+          </ul>
+        </div>
+      </div>
     </details>
 
     <div style="margin-bottom:12px">
@@ -243,7 +296,9 @@
       <div style="display:flex;gap:8px">
         <input type="text" id="apiKeyInput" placeholder="AIzaSy..." style="flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:monospace;font-size:13px;outline:none">
         <button class="btn btn-primary btn-sm" onclick="saveApiKey()" style="width:auto;padding:10px 16px">💾</button>
+        <button class="btn btn-outline btn-sm" onclick="testApiKey()" id="btnTestKey" style="width:auto;padding:10px 16px">🧪 Test</button>
       </div>
+      <div id="testResult" style="margin-top:8px;font-size:12px;font-weight:600;text-align:center;border-radius:8px;padding:0;transition:all 0.3s"></div>
     </div>
 
     <div>
@@ -341,7 +396,7 @@ function updateApiStatus() {
   var el = document.getElementById("apiStatus");
   if (HAS_AI_KEY) {
     el.style.background = "var(--success-bg)"; el.style.border = "1px solid var(--success)"; el.style.color = "var(--success)";
-    el.textContent = "✅ Gemini AI aktywne — analiza zdjęć włączona";
+    el.textContent = "✅ Gemini 1.5 Flash aktywne — analiza zdjęć włączona";
     document.getElementById("apiKeyInput").value = GEMINI_API_KEY.slice(0, 8) + "…" + GEMINI_API_KEY.slice(-4);
   } else {
     el.style.background = "var(--error-bg)"; el.style.border = "1px solid var(--error)"; el.style.color = "var(--error)";
@@ -378,6 +433,54 @@ function saveWorkerUrl() {
   CLOUDFLARE_WORKER_URL = url;
   updateWorkerStatus();
   showToast(url ? "☁️ Worker URL zapisany!" : "📡 Worker usunięty — wysyłka bezpośrednio", "success");
+}
+
+async function testApiKey() {
+  var key = GEMINI_API_KEY || document.getElementById("apiKeyInput").value.trim();
+  if (!key || key.length < 10) { showToast("Najpierw wklej i zapisz klucz API", "error"); return; }
+  var btn = document.getElementById("btnTestKey");
+  var result = document.getElementById("testResult");
+  btn.disabled = true; btn.textContent = "⏳...";
+  result.style.padding = "8px 12px";
+  result.style.background = "var(--surface2)"; result.style.border = "1px solid var(--border)"; result.style.color = "var(--text2)";
+  result.textContent = "⏳ Testuję połączenie z Gemini 1.5 Flash...";
+  try {
+    var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + key;
+    var res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: "Odpowiedz jednym słowem: działa" }] }],
+        generationConfig: { temperature: 0, maxOutputTokens: 10 }
+      })
+    });
+    if (res.ok) {
+      var data = await res.json();
+      var text = "";
+      try { text = data.candidates[0].content.parts[0].text; } catch(e) {}
+      result.style.background = "var(--success-bg)"; result.style.border = "1px solid var(--success)"; result.style.color = "var(--success)";
+      result.textContent = "✅ Klucz działa! Gemini odpowiedział: \"" + text.trim().slice(0, 50) + "\"";
+    } else if (res.status === 429) {
+      result.style.background = "#422006"; result.style.border = "1px solid var(--warning)"; result.style.color = "var(--warning)";
+      result.textContent = "⚠️ Klucz jest poprawny, ale przekroczono limit. Poczekaj 1-2 minuty i spróbuj ponownie.";
+    } else if (res.status === 403) {
+      var errData = await res.text().catch(function() { return ""; });
+      result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
+      result.innerHTML = "❌ Błąd 403: Brak dostępu. <b>Włącz Generative Language API</b> w Google Cloud Console → " +
+        "<a href='https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com' target='_blank' style='color:var(--accent);text-decoration:underline'>kliknij tutaj</a>";
+    } else if (res.status === 404) {
+      result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
+      result.textContent = "❌ Błąd 404: Model niedostępny. Upewnij się, że Generative Language API jest włączone w projekcie Google Cloud.";
+    } else {
+      var errText = await res.text().catch(function() { return ""; });
+      result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
+      result.textContent = "❌ Błąd " + res.status + ": " + errText.slice(0, 150);
+    }
+  } catch(e) {
+    result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
+    result.textContent = "❌ Błąd sieci: " + e.message;
+  }
+  btn.disabled = false; btn.textContent = "🧪 Test";
 }
 
 document.addEventListener("DOMContentLoaded", updateApiStatus);
@@ -540,7 +643,7 @@ async function analyzeWithGemini(dataUrl) {
   var mimeType = dataUrl.match(/^data:(image\/[^;]+);/);
   mimeType = mimeType ? mimeType[1] : "image/jpeg";
 
-  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=" + GEMINI_API_KEY;
+  var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + GEMINI_API_KEY;
 
   var res = await fetch(url, {
     method: "POST",
