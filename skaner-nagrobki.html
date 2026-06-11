@@ -566,6 +566,78 @@ function cleanText(raw) {
   TRASH.forEach(function(re) { t = t.replace(re, " "); });
   return t.replace(/[ \t]+/g, " ").trim();
 }
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  GPS Z TEKSTU OCR (DMS → Decimal)                                 ║
+// ╚══════════════════════════════════════════════════════════════════╝
+function convertDMSTextToDecimal(deg, min, sec, dir) {
+  var d = parseFloat(deg) || 0;
+  var m = parseFloat(min) || 0;
+  var s = parseFloat(sec) || 0;
+  var dec = d + (m / 60) + (s / 3600);
+  if (dir === "S" || dir === "W") dec = -dec;
+  return parseFloat(dec.toFixed(6));
+}
+
+function parseGpsFromText(raw) {
+  // Wzorce współrzędnych DMS w tekście:
+  //   52°12'56"N  /  52° 12' 56" N  /  52°12'56.7"N
+  //   52°12'56''N  /  52°12′56″N  (różne znaki cudzysłowów)
+  //   N 52°12'56"  (kierunek z przodu)
+  //   52.2155°N / 52.2155 N  (format dziesiętny z kierunkiem)
+  //   52 12 56 N  (same spacje)
+
+  var result = { lat: null, lng: null };
+
+  // Normalizuj znaki specjalne → standardowe °'"
+  var t = raw
+    .replace(/[˚º⁰]/g, "°")
+    .replace(/[′`‛]/g, "'")
+    .replace(/[″‟˝]/g, '"')
+    .replace(/''/g, '"');  // dwa apostrofy = sekundy
+
+  // Pattern 1: DMS — 52°12'56.7"N lub N52°12'56.7"
+  var dmsRe = /([NSEW])?\s*(\d{1,3})\s*°\s*(\d{1,2})\s*['']\s*(\d{1,2}(?:[.,]\d+)?)\s*[""]?\s*([NSEW])?/gi;
+  var matches = [];
+  var m;
+  while ((m = dmsRe.exec(t)) !== null) {
+    var dir = (m[1] || m[5] || "").toUpperCase();
+    if (!dir) continue;
+    var dec = convertDMSTextToDecimal(m[2], m[3], m[4].replace(",", "."), dir);
+    matches.push({ dir: dir, val: dec });
+  }
+
+  // Pattern 2: Decimal degrees z kierunkiem — 52.2155°N lub 52.2155 N
+  var decRe = /([NSEW])?\s*(\d{1,3}[.,]\d+)\s*°?\s*([NSEW])?/gi;
+  while ((m = decRe.exec(t)) !== null) {
+    var dir2 = (m[1] || m[3] || "").toUpperCase();
+    if (!dir2) continue;
+    var val = parseFloat(m[2].replace(",", "."));
+    if (dir2 === "S" || dir2 === "W") val = -val;
+    matches.push({ dir: dir2, val: parseFloat(val.toFixed(6)) });
+  }
+
+  // Pattern 3: Same spacje — 52 12 56 N (3 liczby + kierunek)
+  var spaceRe = /(\d{1,3})\s+(\d{1,2})\s+(\d{1,2}(?:[.,]\d+)?)\s*([NSEW])/gi;
+  while ((m = spaceRe.exec(t)) !== null) {
+    var dir3 = m[4].toUpperCase();
+    var dec3 = convertDMSTextToDecimal(m[1], m[2], m[3].replace(",", "."), dir3);
+    matches.push({ dir: dir3, val: dec3 });
+  }
+
+  // Przypisz: N/S → lat, E/W → lng (bierz pierwszy trafiony)
+  for (var i = 0; i < matches.length; i++) {
+    var item = matches[i];
+    if ((item.dir === "N" || item.dir === "S") && result.lat === null) result.lat = item.val;
+    if ((item.dir === "E" || item.dir === "W") && result.lng === null) result.lng = item.val;
+  }
+
+  // Walidacja zakresów
+  if (result.lat !== null && (result.lat < -90 || result.lat > 90)) result.lat = null;
+  if (result.lng !== null && (result.lng < -180 || result.lng > 180)) result.lng = null;
+
+  return (result.lat !== null && result.lng !== null) ? result : null;
+}
+
 function parseData(cleaned) {
   var r = { imie: "", nazwisko: "", daty: "" };
   var pats = [
@@ -608,8 +680,8 @@ async function startProcessing() {
     var gps = await readExifGps(photos[i].file);
     gpsPerPhoto.push(gps || sharedGps);
   }
-  if (sharedGps) setStep("stepGps", "done", "GPS znaleziony: " + sharedGps.lat + ", " + sharedGps.lng);
-  else setStep("stepGps", "error", "Brak GPS w EXIF — wpisz ręcznie");
+  if (sharedGps) setStep("stepGps", "done", "GPS z EXIF: " + sharedGps.lat + ", " + sharedGps.lng);
+  else setStep("stepGps", "done", "Brak GPS w EXIF — szukam w tekście OCR");
 
   // OCR per zdjęcie
   if (!HAS_VISION_KEY) {
@@ -638,6 +710,11 @@ async function startProcessing() {
       }
       renderGrid();
       var gps = gpsPerPhoto[j];
+      // Jeśli brak GPS z EXIF, szukaj współrzędnych w tekście OCR
+      if (!gps && ocrText) {
+        var ocrGps = parseGpsFromText(ocrText);
+        if (ocrGps) gps = ocrGps;
+      }
       var parsed = ocrText ? parseData(cleanText(ocrText)) : { imie: "", nazwisko: "", daty: "" };
       var fullName = [parsed.imie, parsed.nazwisko].filter(Boolean).join(" ");
       records.push({
