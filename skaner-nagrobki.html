@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
 <title>📸 Skaner Nagrobków</title>
 <!-- Biblioteki offline — pliki lokalne (patrz OFFLINE-SETUP.md) -->
 <script src="exif.min.js"></script>
@@ -1650,6 +1654,19 @@ function decimalToDMS(dd) {
   var secFloat = (minFloat - m) * 60;
   var s = Math.round(secFloat * 10000);
   return [[d, 1], [m, 1], [s, 10000]];
+}
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  SERVICE WORKER — rejestracja PWA                                 ║
+// ╚══════════════════════════════════════════════════════════════════╝
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').then(function(reg) {
+      console.log('[PWA] Service Worker zarejestrowany:', reg.scope);
+    }).catch(function(err) {
+      console.log('[PWA] SW rejestracja nieudana (to OK na file://):', err.message);
+    });
+  });
 }
 
 // ── Override startProcessing to use browserGps ──
