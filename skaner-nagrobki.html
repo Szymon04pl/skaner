@@ -4,10 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>📸 Skaner Nagrobków</title>
-<script src="https://unpkg.com/exif-js@2.3.0/exif.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Biblioteki offline — pliki lokalne (patrz OFFLINE-SETUP.md) -->
+<script src="exif.min.js"></script>
+<script src="piexif.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -19,7 +18,7 @@
     --warning: #f59e0b; --radius: 16px; --radius-sm: 12px;
   }
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background: var(--bg); color: var(--text);
     min-height: 100dvh; -webkit-font-smoothing: antialiased;
   }
@@ -237,7 +236,7 @@
     position: absolute; bottom: 80px; right: 12px;
     background: rgba(0,0,0,0.75); color: #fff;
     padding: 8px 14px; border-radius: 10px;
-    font-family: 'Inter', monospace; font-size: 13px; font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace; font-size: 13px; font-weight: 600;
     line-height: 1.6; pointer-events: none; text-shadow: 0 1px 2px rgba(0,0,0,0.5);
     max-width: 260px;
   }
@@ -1524,7 +1523,7 @@ function capturePhoto() {
 
   // Font size proportional to image width (big & very readable)
   var fontSize = Math.max(36, Math.round(w * 0.04));
-  ctx.font = "bold " + fontSize + "px 'Inter', 'Arial', monospace";
+  ctx.font = "bold " + fontSize + "px Arial, Helvetica, sans-serif";
   var padding = Math.round(fontSize * 0.6);
   var lineSpacing = Math.round(fontSize * 1.4);
 
@@ -1556,7 +1555,7 @@ function capturePhoto() {
   // Draw white text
   ctx.fillStyle = "#ffffff";
   ctx.textBaseline = "top";
-  ctx.font = "bold " + fontSize + "px 'Inter', 'Arial', monospace";
+  ctx.font = "bold " + fontSize + "px Arial, Helvetica, sans-serif";
   ctx.fillText(line1, barX + padding, barY + padding);
   ctx.fillText(line2, barX + padding, barY + padding + lineSpacing);
 
