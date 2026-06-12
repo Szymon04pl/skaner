@@ -218,7 +218,20 @@
     display: flex; align-items: center; justify-content: center;
   }
   .camera-video-wrap video {
+    position: absolute; top: 0; left: 0;
     width: 100%; height: 100%; object-fit: cover;
+  }
+  @media (orientation: landscape) {
+    .camera-overlay { flex-direction: row; }
+    .camera-controls {
+      height: 100%; width: 100px;
+      flex-direction: column; padding: 24px 0;
+    }
+    .camera-top-bar {
+      width: auto; right: auto; bottom: 0;
+      padding: 12px 16px;
+    }
+    .camera-gps-overlay { bottom: 16px; right: 110px; }
   }
   .camera-gps-overlay {
     position: absolute; bottom: 80px; right: 12px;
@@ -1505,13 +1518,12 @@ function capturePhoto() {
 
   var latStr = camCurrentPos ? camCurrentPos.lat.toFixed(6) : "---";
   var lngStr = camCurrentPos ? camCurrentPos.lng.toFixed(6) : "---";
-  var accStr = camCurrentPos ? ("±" + Math.round(camCurrentPos.accuracy) + "m") : "";
 
-  var line1 = "LAT: " + latStr + "  LNG: " + lngStr;
-  var line2 = dateStr + (accStr ? "  " + accStr : "");
+  var line1 = latStr + ", " + lngStr;
+  var line2 = dateStr;
 
-  // Font size proportional to image width (big & readable)
-  var fontSize = Math.max(28, Math.round(w * 0.028));
+  // Font size proportional to image width (big & very readable)
+  var fontSize = Math.max(36, Math.round(w * 0.04));
   ctx.font = "bold " + fontSize + "px 'Inter', 'Arial', monospace";
   var padding = Math.round(fontSize * 0.6);
   var lineSpacing = Math.round(fontSize * 1.4);
@@ -1526,7 +1538,7 @@ function capturePhoto() {
   // Draw black background bar (bottom-right)
   var barX = w - barW - padding;
   var barY = h - barH - padding;
-  ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+  ctx.fillStyle = "#000000";
   ctx.beginPath();
   var r = Math.round(fontSize * 0.3);
   ctx.moveTo(barX + r, barY);
@@ -1610,12 +1622,25 @@ function capturePhoto() {
 }
 
 function downloadDataUrl(dataUrl, fileName) {
+  // Convert data URL to Blob for reliable Android auto-download
+  var byteStr = atob(dataUrl.split(",")[1]);
+  var mimeStr = dataUrl.split(",")[0].split(":")[1].split(";")[0];
+  var ab = new ArrayBuffer(byteStr.length);
+  var ua = new Uint8Array(ab);
+  for (var i = 0; i < byteStr.length; i++) ua[i] = byteStr.charCodeAt(i);
+  var blob = new Blob([ab], { type: mimeStr });
+  var blobUrl = URL.createObjectURL(blob);
   var a = document.createElement("a");
-  a.href = dataUrl;
+  a.href = blobUrl;
   a.download = fileName;
+  a.style.display = "none";
   document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
+  // Cleanup after a short delay to ensure download starts
+  setTimeout(function() {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  }, 1000);
 }
 
 // Convert decimal degrees to DMS for EXIF [[deg,1],[min,1],[sec*10000,10000]]
