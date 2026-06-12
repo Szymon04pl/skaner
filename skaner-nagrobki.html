@@ -106,7 +106,9 @@
   .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
   .btn-success { background: var(--success); color: #fff; }
   .btn-success:hover:not(:disabled) { background: #16a34a; }
-  .btn-sm { padding: 10px 16px; font-size: 13px; border-radius: 10px; }
+  .btn-sm {
+    padding: 10px 16px; font-size: 13px; border-radius: 10px;
+  }
   .btn-outline {
     background: transparent; border: 1px solid var(--border); color: var(--text);
   }
@@ -145,20 +147,6 @@
   .field input:focus, .field textarea:focus { border-color: var(--accent); }
   .field textarea { resize: vertical; min-height: 50px; }
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .field-error input { border-color: var(--error) !important; background: rgba(239,68,68,0.08) !important; }
-  .field-error label { color: var(--error) !important; }
-  .gps-error-hint {
-    font-size: 11px; color: var(--error); margin-top: 4px;
-    padding: 6px 8px; border-radius: 6px; background: var(--error-bg);
-  }
-  .raw-gps-field {
-    margin-top: 4px; padding: 6px 10px; border-radius: 8px;
-    background: var(--surface2); border: 1px solid var(--border);
-    font-size: 11px; color: var(--text2); font-family: monospace;
-    word-break: break-all;
-  }
-  .raw-gps-field .rg-label { color: var(--text2); font-family: 'Inter', sans-serif; font-weight: 500; }
-  .raw-gps-field .rg-val { color: var(--warning); }
   .toast {
     position: fixed; bottom: 24px; left: 50%;
     transform: translateX(-50%) translateY(100px);
@@ -244,10 +232,77 @@
       </div>
     </div>
 
+    <details style="margin-bottom:12px">
+      <summary style="font-size:14px;font-weight:600;cursor:pointer;color:var(--text);margin-bottom:10px">
+        📋 Jak uzyskać klucz Gemini API (za darmo) — SZCZEGÓŁOWA INSTRUKCJA
+      </summary>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8">
+
+        <p style="margin:10px 0 6px;color:var(--warning);font-weight:600">⚠️ WAŻNE: Ta aplikacja używa modelu <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:11px">gemini-1.5-flash-latest</code>. Klucz musi mieć dostęp do tego modelu.</p>
+
+        <p style="margin:12px 0 6px;color:var(--text);font-weight:700;font-size:14px">KROK 1: Utwórz projekt Google Cloud</p>
+        <ol style="padding-left:20px;margin:0">
+          <li>Wejdź na <a href="https://console.cloud.google.com/" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">console.cloud.google.com</a></li>
+          <li>Zaloguj się kontem Google</li>
+          <li>U góry strony kliknij na <b style="color:var(--text)">nazwę projektu</b> (obok loga Google Cloud)</li>
+          <li>Kliknij <b style="color:var(--text)">„Nowy projekt"</b> (lub „New Project")</li>
+          <li>Nazwij go np. <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:11px">skaner-nagrobkow</code> i kliknij <b style="color:var(--text)">„Utwórz"</b></li>
+          <li>Poczekaj ~15 sekund aż projekt się utworzy, potem <b style="color:var(--text)">wybierz go</b> u góry</li>
+        </ol>
+
+        <p style="margin:16px 0 6px;color:var(--text);font-weight:700;font-size:14px">KROK 2: Włącz Generative Language API</p>
+        <ol style="padding-left:20px;margin:0">
+          <li>Wejdź na <a href="https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">tę stronę (Generative Language API)</a></li>
+          <li>Upewnij się, że <b style="color:var(--text)">u góry widnieje Twój nowy projekt</b></li>
+          <li>Kliknij niebieski przycisk <b style="color:var(--text)">„Włącz" / „Enable"</b></li>
+          <li>Poczekaj aż API się aktywuje (~30 sekund)</li>
+        </ol>
+
+        <p style="margin:16px 0 6px;color:var(--text);font-weight:700;font-size:14px">KROK 3: Utwórz klucz API w Google AI Studio</p>
+        <ol style="padding-left:20px;margin:0">
+          <li>Wejdź na <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">aistudio.google.com/apikey</a></li>
+          <li>Kliknij <b style="color:var(--text)">„Create API key"</b></li>
+          <li>Z listy wybierz <b style="color:var(--text)">projekt, który przed chwilą utworzyłeś</b> (np. „skaner-nagrobkow")</li>
+          <li>Kliknij <b style="color:var(--text)">„Create API key in existing project"</b></li>
+          <li>Skopiuj klucz — zaczyna się od <code style="background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:11px">AIzaSy...</code></li>
+        </ol>
+
+        <p style="margin:16px 0 6px;color:var(--text);font-weight:700;font-size:14px">KROK 4: Sprawdź czy klucz działa</p>
+        <ol style="padding-left:20px;margin:0">
+          <li>Wklej klucz w pole poniżej i kliknij 💾</li>
+          <li>Kliknij przycisk <b style="color:var(--text)">„🧪 Testuj klucz"</b> który pojawi się obok</li>
+          <li>Jeśli widzisz ✅ — klucz działa, możesz skanować</li>
+          <li>Jeśli widzisz ❌ — sprawdź czy:
+            <ul style="padding-left:16px;margin:4px 0">
+              <li>Klucz jest poprawnie skopiowany (bez spacji)</li>
+              <li>Generative Language API jest włączone (Krok 2)</li>
+              <li>Wybrałeś właściwy projekt przy tworzeniu klucza</li>
+              <li>Poczekaj 2-3 minuty — nowe klucze potrzebują czasu na aktywację</li>
+            </ul>
+          </li>
+        </ol>
+
+        <div style="margin:14px 0 8px;padding:10px 14px;border-radius:10px;background:var(--success-bg);border:1px solid var(--success)">
+          <p style="color:var(--success);font-weight:600;font-size:13px;margin:0">💰 Darmowe limity Gemini 1.5 Flash:</p>
+          <p style="color:var(--text2);font-size:12px;margin:4px 0 0">15 zapytań/minutę • 1500 zapytań/dzień • 1 milion tokenów/minutę</p>
+        </div>
+
+        <div style="margin:8px 0;padding:10px 14px;border-radius:10px;background:var(--error-bg);border:1px solid var(--error)">
+          <p style="color:var(--error);font-weight:600;font-size:13px;margin:0">❌ Najczęstsze problemy:</p>
+          <ul style="color:var(--text2);font-size:12px;margin:4px 0 0;padding-left:16px">
+            <li><b>429 Too Many Requests</b> — poczekaj 1-2 minuty i spróbuj ponownie (limit się resetuje)</li>
+            <li><b>403 Forbidden</b> — Generative Language API nie jest włączone (Krok 2)</li>
+            <li><b>400 Bad Request</b> — klucz jest uszkodzony lub zdjęcie za duże (maks ~20MB)</li>
+            <li><b>404 Not Found</b> — klucz nie ma dostępu do modelu (powtórz Krok 2)</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
     <div style="margin-bottom:12px">
-      <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:4px">🔑 Klucz API:</label>
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:4px">🤖 Klucz Gemini API:</label>
       <div style="display:flex;gap:8px">
-        <input type="text" id="apiKeyInput" placeholder="sk-proj-..." style="flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:monospace;font-size:13px;outline:none">
+        <input type="text" id="apiKeyInput" placeholder="AIzaSy..." style="flex:1;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:monospace;font-size:13px;outline:none">
         <button class="btn btn-primary btn-sm" onclick="saveApiKey()" style="width:auto;padding:10px 16px">💾</button>
         <button class="btn btn-outline btn-sm" onclick="testApiKey()" id="btnTestKey" style="width:auto;padding:10px 16px">🧪 Test</button>
       </div>
@@ -298,18 +353,14 @@
         <div class="step-icon" id="stepOcrIcon">2</div>
         <span id="stepOcrText">🤖 Analiza AI...</span>
       </div>
-      <div class="step" id="stepConvert">
-        <div class="step-icon" id="stepConvertIcon">3</div>
-        <span id="stepConvertText">📐 Przeliczanie GPS (DMS → Decimal)...</span>
-      </div>
       <div class="step" id="stepReady">
-        <div class="step-icon" id="stepReadyIcon">4</div>
+        <div class="step-icon" id="stepReadyIcon">3</div>
         <span id="stepReadyText">Gotowe do zapisu</span>
       </div>
     </div>
   </div>
 
-  <!-- ── LISTA REKORDÓW ────────────────────────────────────── -->
+  <!-- ── LISTA REKORDÓW (X formularzy) ────────────────────── -->
   <div id="recordsList"></div>
 
   <!-- ── WYŚLIJ WSZYSTKIE ─────────────────────────────────── -->
@@ -344,8 +395,8 @@ var HAS_AI_KEY = !!(AI_PROVIDER === "openai" ? OPENAI_API_KEY : GEMINI_API_KEY);
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  STAN                                                             ║
 // ╚══════════════════════════════════════════════════════════════════╝
-var photos = [];
-var records = [];
+var photos = [];   // { id, file, dataUrl, status }
+var records = [];  // { id, photoId, dataUrl, nazwa, daty, lat, lng, info, ocrRaw, sendStatus, fileName }
 var nextId = 0;
 
 // ╔══════════════════════════════════════════════════════════════════╗
@@ -364,6 +415,7 @@ function updateApiStatus() {
     el.style.background = "var(--error-bg)"; el.style.border = "1px solid var(--error)"; el.style.color = "var(--error)";
     el.textContent = "❌ Brak klucza API — dane wpisz ręcznie";
   }
+  // Style provider buttons
   var btnO = document.getElementById("btnProvOpenAI");
   var btnG = document.getElementById("btnProvGemini");
   if (btnO && btnG) {
@@ -395,8 +447,13 @@ function updateWorkerStatus() {
 function saveApiKey() {
   var key = document.getElementById("apiKeyInput").value.trim();
   if (!key || key.length < 10) { showToast("Wklej prawidłowy klucz API", "error"); return; }
-  if (AI_PROVIDER === "openai") { localStorage.setItem("OPENAI_API_KEY", key); OPENAI_API_KEY = key; }
-  else { localStorage.setItem("GEMINI_API_KEY", key); GEMINI_API_KEY = key; }
+  if (AI_PROVIDER === "openai") {
+    localStorage.setItem("OPENAI_API_KEY", key);
+    OPENAI_API_KEY = key;
+  } else {
+    localStorage.setItem("GEMINI_API_KEY", key);
+    GEMINI_API_KEY = key;
+  }
   HAS_AI_KEY = true;
   updateApiStatus();
   showToast("✅ Klucz " + (AI_PROVIDER === "openai" ? "OpenAI" : "Gemini") + " zapisany!", "success");
@@ -428,33 +485,58 @@ async function testApiKey() {
   btn.disabled = true; btn.textContent = "⏳...";
   result.style.padding = "8px 12px";
   result.style.background = "var(--surface2)"; result.style.border = "1px solid var(--border)"; result.style.color = "var(--text2)";
-  result.textContent = "⏳ Testuję połączenie...";
+  var provName = AI_PROVIDER === "openai" ? "OpenAI GPT-4o-mini" : "Gemini 1.5 Flash";
+  result.textContent = "⏳ Testuję połączenie z " + provName + "...";
+
   try {
     var res, data, text;
     if (AI_PROVIDER === "openai") {
       res = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
-        body: JSON.stringify({ model: "gpt-4o-mini", messages: [{ role: "user", content: "Odpowiedz jednym słowem: działa" }], temperature: 0, max_tokens: 10 })
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [{ role: "user", content: "Odpowiedz jednym słowem: działa" }],
+          temperature: 0, max_tokens: 10
+        })
       });
       if (res.ok) {
-        data = await res.json(); text = ""; try { text = data.choices[0].message.content; } catch(e) {}
+        data = await res.json();
+        text = ""; try { text = data.choices[0].message.content; } catch(e) {}
         result.style.background = "var(--success-bg)"; result.style.border = "1px solid var(--success)"; result.style.color = "var(--success)";
-        result.textContent = '✅ Klucz działa! Odpowiedź: "' + text.trim().slice(0, 50) + '"';
+        result.textContent = '✅ Klucz działa! GPT-4o-mini odpowiedział: "' + text.trim().slice(0, 50) + '"';
+      } else if (res.status === 401) {
+        result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
+        result.textContent = "❌ Błąd 401: Klucz jest nieprawidłowy. Sprawdź czy skopiowałeś cały klucz (zaczyna się od sk-).";
+      } else if (res.status === 429) {
+        result.style.background = "#422006"; result.style.border = "1px solid var(--warning)"; result.style.color = "var(--warning)";
+        result.textContent = "⚠️ Klucz poprawny, ale przekroczono limit lub brak środków. Sprawdź billing na platform.openai.com.";
+      } else if (res.status === 403) {
+        result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
+        result.textContent = "❌ Błąd 403: Klucz nie ma uprawnień. Sprawdź Permissions na platform.openai.com/api-keys.";
       } else {
         var errText = await res.text().catch(function() { return ""; });
         result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
         result.textContent = "❌ Błąd " + res.status + ": " + errText.slice(0, 150);
       }
     } else {
+      // Gemini test
       res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + key, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents: [{ parts: [{ text: "Odpowiedz jednym słowem: działa" }] }], generationConfig: { temperature: 0, maxOutputTokens: 10 } })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: "Odpowiedz jednym słowem: działa" }] }],
+          generationConfig: { temperature: 0, maxOutputTokens: 10 }
+        })
       });
       if (res.ok) {
-        data = await res.json(); text = ""; try { text = data.candidates[0].content.parts[0].text; } catch(e) {}
+        data = await res.json();
+        text = ""; try { text = data.candidates[0].content.parts[0].text; } catch(e) {}
         result.style.background = "var(--success-bg)"; result.style.border = "1px solid var(--success)"; result.style.color = "var(--success)";
-        result.textContent = '✅ Klucz działa! Odpowiedź: "' + text.trim().slice(0, 50) + '"';
+        result.textContent = '✅ Klucz działa! Gemini odpowiedział: "' + text.trim().slice(0, 50) + '"';
+      } else if (res.status === 429) {
+        result.style.background = "#422006"; result.style.border = "1px solid var(--warning)"; result.style.color = "var(--warning)";
+        result.textContent = "⚠️ Klucz poprawny, ale przekroczono limit. Poczekaj 1-2 minuty.";
       } else {
         var errText = await res.text().catch(function() { return ""; });
         result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
@@ -567,13 +649,12 @@ function setStep(id, state, text) {
   else if (state === "error") icon.textContent = "✗";
 }
 function resetSteps() {
-  ["stepGps","stepOcr","stepConvert","stepReady"].forEach(function(id, i) {
+  ["stepGps","stepOcr","stepReady"].forEach(function(id, i) {
     document.getElementById(id).className = "step";
     document.getElementById(id + "Icon").textContent = String(i + 1);
   });
   document.getElementById("stepGpsText").textContent = "Odczytuję GPS z EXIF...";
-  document.getElementById("stepOcrText").textContent = "🤖 Analiza AI...";
-  document.getElementById("stepConvertText").textContent = "📐 Przeliczanie GPS (DMS → Decimal)...";
+  document.getElementById("stepOcrText").textContent = "🤖 Analiza AI (Gemini)...";
   document.getElementById("stepReadyText").textContent = "Gotowe do zapisu";
 }
 
@@ -581,6 +662,7 @@ function resetSteps() {
 // ║  EXIF GPS                                                         ║
 // ╚══════════════════════════════════════════════════════════════════╝
 function exifVal(v) {
+  // EXIF values can be plain numbers OR objects with numerator/denominator
   if (v == null) return 0;
   if (typeof v === "number") return v;
   if (typeof v === "object" && v.numerator != null && v.denominator != null) {
@@ -619,112 +701,37 @@ function readExifGps(file) {
 }
 
 // ╔══════════════════════════════════════════════════════════════════╗
-// ║  KONWERTER DMS → DECIMAL (JavaScript)                             ║
-// ║  Przyjmuje surowy tekst od AI i wyciąga stopnie, minuty, sekundy  ║
+// ║  GEMINI AI — analiza zdjęcia (tekst + GPS)                        ║
 // ╚══════════════════════════════════════════════════════════════════╝
-function convertDMSToDecimal(dmsString) {
-  if (!dmsString || !dmsString.trim()) return null;
-
-  var t = dmsString.trim()
-    .replace(/[˚º⁰]/g, "°")
-    .replace(/[′`‛']/g, "'")
-    .replace(/[″‟˝"]/g, '"')
-    .replace(/''/g, '"');
-
-  // Wzorzec 1: DMS z symbolami — 52°12'56" N  lub  N 52°12'56"
-  var dmsRe = /([NSEW])?\s*(\d{1,3})\s*°\s*(\d{1,2})\s*['′]\s*(\d{1,2}(?:[.,]\d+)?)\s*["″]?\s*([NSEW])?/i;
-  var m = t.match(dmsRe);
-  if (m) {
-    var deg = parseFloat(m[2]);
-    var min = parseFloat(m[3]);
-    var sec = parseFloat((m[4] || "0").replace(",", "."));
-    var dir = (m[1] || m[5] || "").toUpperCase();
-    var dec = deg + (min / 60) + (sec / 3600);
-    if (dir === "S" || dir === "W") dec = -dec;
-    return parseFloat(dec.toFixed(6));
-  }
-
-  // Wzorzec 2: Spacje + kierunek — 52 12 56 N
-  var spaceRe = /([NSEW])?\s*(\d{1,3})\s+(\d{1,2})\s+(\d{1,2}(?:[.,]\d+)?)\s*([NSEW])?/i;
-  m = t.match(spaceRe);
-  if (m) {
-    var deg = parseFloat(m[2]);
-    var min = parseFloat(m[3]);
-    var sec = parseFloat((m[4] || "0").replace(",", "."));
-    var dir = (m[1] || m[5] || "").toUpperCase();
-    var dec = deg + (min / 60) + (sec / 3600);
-    if (dir === "S" || dir === "W") dec = -dec;
-    return parseFloat(dec.toFixed(6));
-  }
-
-  // Wzorzec 3: Już dziesiętne — 52.2155 N  lub  52.2155
-  var decRe = /([NSEW])?\s*(-?\d{1,3}[.,]\d+)\s*°?\s*([NSEW])?/i;
-  m = t.match(decRe);
-  if (m) {
-    var val = parseFloat(m[2].replace(",", "."));
-    var dir = (m[1] || m[3] || "").toUpperCase();
-    if (dir === "S" || dir === "W") val = -val;
-    if (!isNaN(val)) return parseFloat(val.toFixed(6));
-  }
-
-  // Wzorzec 4: Samo stopnie/minuty — 52°12.345'
-  var dmRe = /(\d{1,3})\s*°\s*(\d{1,2}(?:[.,]\d+)?)\s*['′]?\s*([NSEW])?/i;
-  m = t.match(dmRe);
-  if (m) {
-    var deg = parseFloat(m[1]);
-    var min = parseFloat((m[2] || "0").replace(",", "."));
-    var dir = (m[3] || "").toUpperCase();
-    var dec = deg + (min / 60);
-    if (dir === "S" || dir === "W") dec = -dec;
-    return parseFloat(dec.toFixed(6));
-  }
-
-  return null; // Nie udało się sparsować
-}
-
-// ╔══════════════════════════════════════════════════════════════════╗
-// ║  AI PROMPT — surowe dane, bez obliczeń                            ║
-// ╚══════════════════════════════════════════════════════════════════╝
-var AI_PROMPT = [
-  "Jesteś profesjonalnym asystentem inwentaryzacji cmentarzy.",
-  "Spójrz na zdjęcie nagrobka i wykonaj DOKŁADNIE te kroki:",
-  "",
-  "1. IMIĘ — wyodrębnij imię pierwszej osoby (pomiń ŚP, R.I.P., modlitwy, cytaty, \"Tu spoczywa\" itp.).",
-  "2. NAZWISKO — wyodrębnij nazwisko pierwszej osoby.",
-  '3. DATY — wyodrębnij daty urodzenia i zgonu. Zwróć tylko lata, np. "1920-1985".',
-  "4. GPS — odczytaj tekst stempla GPS z rogu zdjęcia.",
-  "   NIE WYKONUJ ŻADNYCH OBLICZEŃ MATEMATYCZNYCH.",
-  '   Zwróć DOKŁADNIE taki tekst jaki widzisz (np. "52°12\'56\" N").',
-  "   Wpisz surowy tekst latitude do raw_lat i longitude do raw_lng.",
-  "5. RAW_TEXT — przepisz CAŁY widoczny tekst z nagrobka, wiersz po wierszu, oddzielając linie znakiem \\n.",
-  '6. Jeśli czegoś nie widzisz — zostaw pole jako pusty string "".',
-  "",
-  "ODPOWIEDZ WYŁĄCZNIE czystym JSON (bez markdown, bez ```json):",
-  '{"imie": "", "nazwisko": "", "daty": "", "raw_lat": "", "raw_lng": "", "raw_text": ""}'
-].join("
-");
+var GEMINI_PROMPT = 'Jesteś profesjonalnym asystentem inwentaryzacji cmentarzy. Spójrz na zdjęcie nagrobka i:\n\n1. Wyodrębnij Imię i Nazwisko (pomiń modlitwy, cytaty, ŚP, Ave Maria, R.I.P., \"Tu spoczywa\" itp.). Jeśli jest kilka osób, weź pierwszą.\n2. Wyodrębnij datę urodzenia i zgonu (zwróć tylko lata, np. \"1920-1985\"). Jeśli pełne daty — też zamień na lata.\n3. Odczytaj współrzędne GPS ze stempla/napisu na zdjęciu (np. 52°12\'56\" N, 21°3\'55\" E albo 42°21\'53\", 31°6\'1\") i przelicz je na format dziesiętny (np. 52.2155). Jeśli brak liter kierunku (N/S/E/W), załóż N dla pierwszej i E dla drugiej.\n4. Jeśli nie widzisz współrzędnych GPS na zdjęciu, zwróć puste stringi dla lat i lng.\n\nZwróć wynik WYŁĄCZNIE jako czysty JSON (bez markdown, bez ```json):\n{"nazwa": "Imię Nazwisko", "daty": "RRRR-RRRR", "lat": "52.2155", "lng": "21.0653"}';
 
 async function analyzeWithAI(dataUrl) {
-  if (AI_PROVIDER === "openai") return await analyzeWithOpenAI(dataUrl);
-  else return await analyzeWithGemini(dataUrl);
+  if (AI_PROVIDER === "openai") {
+    return await analyzeWithOpenAI(dataUrl);
+  } else {
+    return await analyzeWithGemini(dataUrl);
+  }
 }
 
 // ── OpenAI GPT-4o-mini ──────────────────────────────────────────
 async function analyzeWithOpenAI(dataUrl) {
   var res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + OPENAI_API_KEY },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + OPENAI_API_KEY
+    },
     body: JSON.stringify({
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: "Odpowiadaj WYŁĄCZNIE czystym JSON, bez markdown, bez ```." },
         { role: "user", content: [
-          { type: "text", text: AI_PROMPT },
+          { type: "text", text: GEMINI_PROMPT },
           { type: "image_url", image_url: { url: dataUrl, detail: "low" } }
         ]}
       ],
       temperature: 0.1,
-      max_tokens: 1024
+      max_tokens: 512
     })
   });
 
@@ -733,14 +740,14 @@ async function analyzeWithOpenAI(dataUrl) {
     analyzeWithOpenAI._retries++;
     if (analyzeWithOpenAI._retries <= 2) {
       var waitSec = analyzeWithOpenAI._retries * 5;
-      console.log("OpenAI 429 — czekam " + waitSec + "s (próba " + analyzeWithOpenAI._retries + "/2)...");
+      console.log("OpenAI 429 — czekam " + waitSec + "s i ponawiam (próba " + analyzeWithOpenAI._retries + "/2)...");
       await new Promise(function(r) { setTimeout(r, waitSec * 1000); });
       var result = await analyzeWithOpenAI(dataUrl);
       analyzeWithOpenAI._retries = 0;
       return result;
     }
     analyzeWithOpenAI._retries = 0;
-    throw new Error("OpenAI API: Przekroczono limit zapytań (429).");
+    throw new Error("OpenAI API: Przekroczono limit zapytań (429). Poczekaj minutę i spróbuj ponownie.");
   }
   if (!res.ok) {
     var errText = await res.text().catch(function() { return ""; });
@@ -749,7 +756,9 @@ async function analyzeWithOpenAI(dataUrl) {
 
   var data = await res.json();
   var text = "";
-  try { text = data.choices[0].message.content; } catch(e) { throw new Error("OpenAI nie zwrócił odpowiedzi"); }
+  try { text = data.choices[0].message.content; } catch(e) {
+    throw new Error("OpenAI nie zwrócił odpowiedzi");
+  }
   console.log("OpenAI raw response:", text);
   return parseAIResponse(text);
 }
@@ -759,16 +768,18 @@ async function analyzeWithGemini(dataUrl) {
   var base64 = dataUrl.replace(/^data:image\/[^;]+;base64,/, "");
   var mimeType = dataUrl.match(/^data:(image\/[^;]+);/);
   mimeType = mimeType ? mimeType[1] : "image/jpeg";
+
   var url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + GEMINI_API_KEY;
+
   var res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [
-        { text: AI_PROMPT },
+        { text: GEMINI_PROMPT },
         { inline_data: { mime_type: mimeType, data: base64 } }
       ]}],
-      generationConfig: { temperature: 0.1, maxOutputTokens: 1024 },
+      generationConfig: { temperature: 0.1, maxOutputTokens: 512 },
       safetySettings: [
         { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
         { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
@@ -777,6 +788,7 @@ async function analyzeWithGemini(dataUrl) {
       ]
     })
   });
+
   if (res.status === 429) {
     if (!analyzeWithGemini._retries) analyzeWithGemini._retries = 0;
     analyzeWithGemini._retries++;
@@ -795,14 +807,17 @@ async function analyzeWithGemini(dataUrl) {
     var errText = await res.text().catch(function() { return ""; });
     throw new Error("Gemini API " + res.status + ": " + errText.slice(0, 200));
   }
+
   var data = await res.json();
   var text = "";
-  try { text = data.candidates[0].content.parts[0].text; } catch(e) { throw new Error("Gemini nie zwrócił odpowiedzi"); }
+  try { text = data.candidates[0].content.parts[0].text; } catch(e) {
+    throw new Error("Gemini nie zwrócił odpowiedzi");
+  }
   console.log("Gemini raw response:", text);
   return parseAIResponse(text);
 }
 
-// ── Wspólny parser odpowiedzi AI → nowy format ───────────────────
+// ── Wspólny parser odpowiedzi AI ─────────────────────────────────
 function parseAIResponse(text) {
   var jsonStr = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
   var parsed;
@@ -821,18 +836,151 @@ function parseAIResponse(text) {
     }
   }
   return {
-    imie: parsed.imie || parsed.nazwa || "",
-    nazwisko: parsed.nazwisko || "",
-    daty: parsed.daty || "",
-    rawLat: parsed.raw_lat || "",
-    rawLng: parsed.raw_lng || "",
-    rawText: parsed.raw_text || "",
+    nazwa: parsed.nazwa || parsed.imie_nazwisko || parsed.name || "",
+    daty: parsed.daty || parsed["rok_urodzenia-zgonu"] || parsed.dates || "",
+    lat: parsed.lat || "",
+    lng: parsed.lng || "",
     rawResponse: text
   };
 }
 
 // ╔══════════════════════════════════════════════════════════════════╗
-// ║  GŁÓWNY FLOW                                                      ║
+// ║  CZYSZCZENIE TEKSTU                                               ║
+// ╚══════════════════════════════════════════════════════════════════╝
+var TRASH = [
+  /ś\.?\s*p\.?/gi, /zmarł[aey]?\.?/gi, /zm\s*\./gi, /żył[aey]?\s+lat/gi,
+  /a\s*†\s*o/gi, /pamięci/gi, /prosi\s*(o\s*)?modlitwę/gi,
+  /requiescat\s+in\s+pace/gi, /r\.?\s*i\.?\s*p\.?/gi,
+  /spoczywaj\s+w\s+pokoju/gi, /tu\s+spoczywa/gi, /grób\s+rodzinny/gi,
+  /pokój\s+(jej|jego|ich)\s+duszy/gi, /cześć\s+ich\s+pamięci/gi,
+  /[†✝✞⸸☦]/g
+];
+function cleanText(raw) {
+  var t = raw;
+  TRASH.forEach(function(re) { t = t.replace(re, " "); });
+  return t.replace(/[ \t]+/g, " ").trim();
+}
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  GPS Z TEKSTU OCR (DMS → Decimal)                                 ║
+// ╚══════════════════════════════════════════════════════════════════╝
+function convertDMSTextToDecimal(deg, min, sec, dir) {
+  var d = parseFloat(deg) || 0;
+  var m = parseFloat(min) || 0;
+  var s = parseFloat(sec) || 0;
+  var dec = d + (m / 60) + (s / 3600);
+  if (dir === "S" || dir === "W") dec = -dec;
+  return parseFloat(dec.toFixed(6));
+}
+
+function parseGpsFromText(raw) {
+  // Obsługiwane formaty:
+  //   42°21'53"N 31°6'1"E          — DMS z kierunkiem
+  //   N 42°21'53"                   — kierunek z przodu
+  //   42°21'53", 31°6'1"           — DMS BEZ kierunku (para)
+  //   42°21'53" 31°6'1"            — DMS BEZ kierunku (spacja)
+  //   52.2155°N / 52.2155 N        — dziesiętne z kierunkiem
+  //   52.2155, 19.4560             — dziesiętne bez kierunku
+  //   52 12 56 N                   — spacje + kierunek
+
+  var result = { lat: null, lng: null };
+
+  // Normalizuj znaki specjalne → standardowe °'"
+  var t = raw
+    .replace(/[˚º⁰]/g, "°")
+    .replace(/[′`‛]/g, "'")
+    .replace(/[″‟˝]/g, '"')
+    .replace(/''/g, '"');
+
+  // ── DMS regex (łapie Z kierunkiem i BEZ) ──
+  // Dopasowuje: 42°21'53"N  lub  N42°21'53"  lub  42°21'53"
+  var dmsRe = /([NSEW])?\s*(\d{1,3})\s*°\s*(\d{1,2})\s*['′]\s*(\d{1,2}(?:[.,]\d+)?)\s*[""″]?\s*([NSEW])?/gi;
+  var dmsMatches = [];
+  var m;
+  while ((m = dmsRe.exec(t)) !== null) {
+    var dir = (m[1] || m[5] || "").toUpperCase();
+    var dec = convertDMSTextToDecimal(m[2], m[3], m[4].replace(",", "."), dir);
+    dmsMatches.push({ dir: dir, val: dec, deg: parseFloat(m[2]) });
+  }
+
+  // ── Decimal z kierunkiem: 52.2155°N lub 52.2155 N ──
+  var decRe = /([NSEW])?\s*(\d{1,3}[.,]\d+)\s*°?\s*([NSEW])/gi;
+  while ((m = decRe.exec(t)) !== null) {
+    var dir2 = (m[1] || m[3] || "").toUpperCase();
+    var val = parseFloat(m[2].replace(",", "."));
+    if (dir2 === "S" || dir2 === "W") val = -val;
+    dmsMatches.push({ dir: dir2, val: parseFloat(val.toFixed(6)), deg: Math.abs(val) });
+  }
+
+  // ── Spacje + kierunek: 52 12 56 N ──
+  var spaceRe = /(\d{1,3})\s+(\d{1,2})\s+(\d{1,2}(?:[.,]\d+)?)\s*([NSEW])/gi;
+  while ((m = spaceRe.exec(t)) !== null) {
+    var dir3 = m[4].toUpperCase();
+    var dec3 = convertDMSTextToDecimal(m[1], m[2], m[3].replace(",", "."), dir3);
+    dmsMatches.push({ dir: dir3, val: dec3, deg: parseFloat(m[1]) });
+  }
+
+  // ── Przypisz dopasowania Z kierunkiem ──
+  for (var i = 0; i < dmsMatches.length; i++) {
+    var item = dmsMatches[i];
+    if (!item.dir) continue;
+    if ((item.dir === "N" || item.dir === "S") && result.lat === null) result.lat = item.val;
+    if ((item.dir === "E" || item.dir === "W") && result.lng === null) result.lng = item.val;
+  }
+
+  // ── Jeśli nie znaleziono z kierunkiem — szukaj par BEZ kierunku ──
+  if (result.lat === null && result.lng === null) {
+    // Zbierz DMS bez kierunku
+    var noDir = dmsMatches.filter(function(x) { return !x.dir; });
+
+    if (noDir.length >= 2) {
+      // Para DMS: pierwsza = lat, druga = lng
+      result.lat = parseFloat(noDir[0].val.toFixed(6));
+      result.lng = parseFloat(noDir[1].val.toFixed(6));
+    } else {
+      // Szukaj pary liczb dziesiętnych: "52.2155, 19.4560" lub "52.2155 19.4560"
+      var decPairRe = /(\d{1,3}[.,]\d{2,})\s*[,;/\s]\s*(\d{1,3}[.,]\d{2,})/g;
+      var dp = decPairRe.exec(t);
+      if (dp) {
+        result.lat = parseFloat(dp[1].replace(",", "."));
+        result.lng = parseFloat(dp[2].replace(",", "."));
+      }
+    }
+  }
+
+  // Walidacja zakresów
+  if (result.lat !== null && (result.lat < -90 || result.lat > 90)) {
+    // Może zamienione? Spróbuj swap
+    if (result.lng !== null && result.lng >= -90 && result.lng <= 90) {
+      var tmp = result.lat; result.lat = result.lng; result.lng = tmp;
+    } else {
+      result.lat = null;
+    }
+  }
+  if (result.lng !== null && (result.lng < -180 || result.lng > 180)) result.lng = null;
+
+  return (result.lat !== null && result.lng !== null) ? result : null;
+}
+
+function parseData(cleaned) {
+  var r = { imie: "", nazwisko: "", daty: "" };
+  var pats = [
+    /(\d{1,2}[.\-\/]\d{1,2}[.\-\/]\d{4})\s*[-–—]\s*(\d{1,2}[.\-\/]\d{1,2}[.\-\/]\d{4})/g,
+    /(\d{4})\s*[-–—]\s*(\d{4})/g,
+    /\d{1,2}[.\-\/]\d{1,2}[.\-\/]\d{4}/g,
+    /\b(1[89]\d{2}|20[0-2]\d)\b/g,
+  ];
+  var dates = [], rest = cleaned;
+  pats.forEach(function(p) { var m = cleaned.match(p); if (m) { dates = dates.concat(m); m.forEach(function(x) { rest = rest.replace(x, " "); }); } });
+  r.daty = dates.filter(function(v,i,a) { return a.indexOf(v)===i; }).join(" – ");
+  var words = rest.replace(/[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s-]/g, " ").split(/\s+/)
+    .filter(function(w) { return w.length >= 2 && /^[A-ZĄĆĘŁŃÓŚŹŻ]/.test(w); });
+  if (words.length >= 2) { r.imie = words[0]; r.nazwisko = words.slice(1).join(" "); }
+  else if (words.length === 1) r.nazwisko = words[0];
+  return r;
+}
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  GŁÓWNY FLOW — przetwórz KAŻDE zdjęcie osobno                    ║
 // ╚══════════════════════════════════════════════════════════════════╝
 async function startProcessing() {
   if (!photos.length) return;
@@ -842,41 +990,41 @@ async function startProcessing() {
   resetSteps();
   records = [];
 
-  // KROK 1: EXIF GPS
+  // Wspólne GPS — szukamy w pierwszym zdjęciu z GPS
   setStep("stepGps", "active");
   var sharedGps = null;
   for (var i = 0; i < photos.length; i++) {
     var g = await readExifGps(photos[i].file);
     if (g) { sharedGps = g; break; }
   }
+  // Indywidualne GPS per zdjęcie
   var gpsPerPhoto = [];
   for (var i = 0; i < photos.length; i++) {
     var gps = await readExifGps(photos[i].file);
     gpsPerPhoto.push(gps || sharedGps);
   }
   if (sharedGps) setStep("stepGps", "done", "GPS z EXIF: " + sharedGps.lat + ", " + sharedGps.lng);
-  else setStep("stepGps", "done", "Brak GPS w EXIF — szukam w tekście ze zdjęcia");
+  else setStep("stepGps", "done", "Brak GPS w EXIF — szukam w tekście OCR");
 
-  // KROK 2: Analiza AI
+  // Analiza AI per zdjęcie
   if (!HAS_AI_KEY) {
     setStep("stepOcr", "done", "AI pominięte (brak klucza API)");
-    setStep("stepConvert", "done", "Pominięte");
     for (var i = 0; i < photos.length; i++) {
       var gps = gpsPerPhoto[i];
       records.push({
         id: ++nextId, photoId: photos[i].id, dataUrl: photos[i].dataUrl,
-        imie: "", nazwisko: "", daty: "", fileName: photos[i].file.name,
+        nazwa: "", daty: "", fileName: photos[i].file.name,
         lat: gps ? String(gps.lat) : "", lng: gps ? String(gps.lng) : "",
-        rawLat: "", rawLng: "", rawText: "",
-        info: "", ocrRaw: "", sendStatus: "ready", gpsError: false
+        info: "", ocrRaw: "", sendStatus: "ready"
       });
     }
   } else {
     setStep("stepOcr", "active");
     var aiOk = 0;
-    var aiResults = [];
     for (var j = 0; j < photos.length; j++) {
+      // Opóźnienie 3s między zdjęciami (poza pierwszym) aby nie przekroczyć limitu
       if (j > 0) {
+        var aiName = AI_PROVIDER === "openai" ? "GPT-4o-mini" : "Gemini";
         setStep("stepOcr", "active", "⏳ Czekam 3s przed zdjęciem " + (j+1) + "/" + photos.length + "...");
         await new Promise(function(r) { setTimeout(r, 3000); });
       }
@@ -889,76 +1037,36 @@ async function startProcessing() {
         photos[j].status = "done";
         aiOk++;
       } catch(e) {
-        console.error("AI error for photo " + (j+1) + ":", e);
+        console.error("Gemini error for photo " + (j+1) + ":", e);
         photos[j].status = "error";
       }
       renderGrid();
-      aiResults.push(aiResult);
+
+      var gps = gpsPerPhoto[j];
+      var nazwa = "", daty = "", aiLat = "", aiLng = "", rawResp = "";
+
+      if (aiResult) {
+        nazwa = aiResult.nazwa || "";
+        daty = aiResult.daty || "";
+        aiLat = aiResult.lat ? String(aiResult.lat) : "";
+        aiLng = aiResult.lng ? String(aiResult.lng) : "";
+        rawResp = aiResult.rawResponse || "";
+      }
+
+      // GPS: priorytet EXIF > Gemini AI
+      var finalLat = gps ? String(gps.lat) : aiLat;
+      var finalLng = gps ? String(gps.lng) : aiLng;
+
+      records.push({
+        id: ++nextId, photoId: photos[j].id, dataUrl: photos[j].dataUrl,
+        nazwa: nazwa, daty: daty, fileName: photos[j].file.name,
+        lat: finalLat, lng: finalLng,
+        info: "", ocrRaw: rawResp, sendStatus: "ready"
+      });
     }
     var aiLabel = AI_PROVIDER === "openai" ? "GPT-4o-mini" : "Gemini";
     setStep("stepOcr", aiOk > 0 ? "done" : "error",
       aiOk > 0 ? "🤖 " + aiLabel + " przeanalizował " + aiOk + "/" + photos.length + " zdjęć" : aiLabel + " nie rozpoznał danych");
-
-    // KROK 3: Przeliczanie GPS (DMS → Decimal) w JavaScript
-    setStep("stepConvert", "active");
-    var convertOk = 0;
-    var convertFail = 0;
-    for (var j = 0; j < photos.length; j++) {
-      var ai = aiResults[j];
-      var gps = gpsPerPhoto[j];
-      var imie = "", nazwisko = "", daty = "", rawLat = "", rawLng = "", rawText = "", rawResp = "";
-      var gpsError = false;
-
-      if (ai) {
-        imie = ai.imie || "";
-        nazwisko = ai.nazwisko || "";
-        daty = ai.daty || "";
-        rawLat = ai.rawLat || "";
-        rawLng = ai.rawLng || "";
-        rawText = ai.rawText || "";
-        rawResp = ai.rawResponse || "";
-      }
-
-      // GPS: priorytet EXIF > AI (przeliczone przez JS)
-      var finalLat = "", finalLng = "";
-      if (gps) {
-        finalLat = String(gps.lat);
-        finalLng = String(gps.lng);
-      } else if (rawLat || rawLng) {
-        var convLat = convertDMSToDecimal(rawLat);
-        var convLng = convertDMSToDecimal(rawLng);
-
-        if (convLat !== null && !isNaN(convLat) && convLat >= -90 && convLat <= 90) {
-          finalLat = String(convLat);
-        } else if (rawLat.trim()) {
-          gpsError = true;
-          console.warn("Nie udało się przeliczyć lat: \"" + rawLat + "\"");
-        }
-
-        if (convLng !== null && !isNaN(convLng) && convLng >= -180 && convLng <= 180) {
-          finalLng = String(convLng);
-        } else if (rawLng.trim()) {
-          gpsError = true;
-          console.warn("Nie udało się przeliczyć lng: \"" + rawLng + "\"");
-        }
-
-        if (gpsError) convertFail++;
-        else if (finalLat && finalLng) convertOk++;
-      }
-
-      records.push({
-        id: ++nextId, photoId: photos[j].id, dataUrl: photos[j].dataUrl,
-        imie: imie, nazwisko: nazwisko, daty: daty, fileName: photos[j].file.name,
-        lat: finalLat, lng: finalLng,
-        rawLat: rawLat, rawLng: rawLng, rawText: rawText,
-        info: "", ocrRaw: rawResp, sendStatus: "ready", gpsError: gpsError
-      });
-    }
-
-    var convertMsg = "📐 GPS przeliczone";
-    if (convertOk > 0) convertMsg += " (" + convertOk + " OK)";
-    if (convertFail > 0) convertMsg += " ⚠️ " + convertFail + " wymaga korekty";
-    setStep("stepConvert", convertFail > 0 ? "error" : "done", convertMsg);
   }
 
   setStep("stepReady", "done", records.length + " rekordów gotowych do sprawdzenia");
@@ -998,7 +1106,7 @@ function renderRecords() {
     var info = document.createElement("div"); info.className = "record-header-info";
     var nameEl = document.createElement("div"); nameEl.className = "rh-name";
     nameEl.id = "rh-name-" + rec.id;
-    nameEl.textContent = (rec.imie + " " + rec.nazwisko).trim() || "Zdjęcie #" + (idx + 1);
+    nameEl.textContent = rec.nazwa || "Zdjęcie #" + (idx + 1);
     info.appendChild(nameEl);
     var sub = document.createElement("div"); sub.className = "rh-sub";
     sub.id = "rh-sub-" + rec.id;
@@ -1008,7 +1116,6 @@ function renderRecords() {
     var badge = document.createElement("div"); badge.className = "record-badge";
     badge.id = "badge-" + rec.id;
     if (rec.sendStatus === "sent") { badge.className += " rb-sent"; badge.textContent = "✓ Wysłano"; }
-    else if (rec.gpsError) { badge.className += " rb-error"; badge.textContent = "⚠️ GPS"; }
     else { badge.className += " rb-ready"; badge.textContent = "#" + (idx + 1); }
     header.appendChild(badge);
     card.appendChild(header);
@@ -1017,76 +1124,47 @@ function renderRecords() {
     var body = document.createElement("div"); body.className = "record-body" + (rec.sendStatus !== "sent" ? " open" : "");
     body.id = "body-" + rec.id;
 
-    // ── Pełny tekst odczytany przez AI ──
-    if (rec.rawText) {
-      var fRaw = document.createElement("div"); fRaw.className = "field";
-      fRaw.innerHTML = '<label>📝 Pełny tekst odczytany przez AI</label>' +
-        '<textarea id="f-rawtext-' + rec.id + '" rows="4" style="font-size:13px;line-height:1.5;resize:vertical;min-height:80px" readonly>' + escHtml(rec.rawText) + '</textarea>';
-      body.appendChild(fRaw);
-    }
-
-    // AI raw response (collapsible)
+    // OCR raw
     if (rec.ocrRaw) {
       var det = document.createElement("details"); det.style.marginBottom = "12px";
       var sum = document.createElement("summary"); sum.style.cssText = "font-size:12px;color:var(--text2);cursor:pointer;margin-bottom:6px";
-      sum.textContent = "🤖 Surowa odpowiedź AI (JSON)"; det.appendChild(sum);
+      sum.textContent = "🤖 Odpowiedź Gemini AI"; det.appendChild(sum);
       var raw = document.createElement("div"); raw.className = "raw-text"; raw.textContent = rec.ocrRaw; det.appendChild(raw);
       body.appendChild(det);
     } else if (HAS_AI_KEY) {
       var note = document.createElement("div");
       note.style.cssText = "background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:12px;color:var(--warning);text-align:center;margin-bottom:12px";
-      note.textContent = "⚠️ AI nie rozpoznało danych z tego zdjęcia";
+      note.textContent = "⚠️ Gemini nie rozpoznał danych z tego zdjęcia";
       body.appendChild(note);
     }
 
-    // Imię i Nazwisko (osobno)
-    var fNameRow = document.createElement("div"); fNameRow.className = "field-row";
-    fNameRow.innerHTML = '<div class="field"><label>Imię</label><input type="text" id="f-imie-' + rec.id + '" value="' + escHtml(rec.imie) + '" placeholder="np. Jan" oninput="updateRecordField(' + rec.id + ',\'imie\',this.value)"></div>' +
-      '<div class="field"><label>Nazwisko</label><input type="text" id="f-nazwisko-' + rec.id + '" value="' + escHtml(rec.nazwisko) + '" placeholder="np. Kowalski" oninput="updateRecordField(' + rec.id + ',\'nazwisko\',this.value)"></div>';
-    body.appendChild(fNameRow);
+    // Fields
+    var fNazwa = document.createElement("div"); fNazwa.className = "field";
+    fNazwa.innerHTML = '<label>Imię i nazwisko</label><input type="text" id="f-nazwa-'+rec.id+'" value="'+escHtml(rec.nazwa)+'" placeholder="np. Jan Kowalski" oninput="updateRecordField('+rec.id+',\'nazwa\',this.value)">';
+    body.appendChild(fNazwa);
 
     var fDaty = document.createElement("div"); fDaty.className = "field";
-    fDaty.innerHTML = '<label>Daty</label><input type="text" id="f-daty-' + rec.id + '" value="' + escHtml(rec.daty) + '" placeholder="np. 1920-1985" oninput="updateRecordField(' + rec.id + ',\'daty\',this.value)">';
+    fDaty.innerHTML = '<label>Daty</label><input type="text" id="f-daty-'+rec.id+'" value="'+escHtml(rec.daty)+'" placeholder="np. 1920-1985" oninput="updateRecordField('+rec.id+',\'daty\',this.value)">';
     body.appendChild(fDaty);
 
     var fFile = document.createElement("div"); fFile.className = "field";
-    fFile.innerHTML = '<label>📁 Nazwa pliku</label><input type="text" value="' + escHtml(rec.fileName) + '" readonly style="opacity:0.7;cursor:default">';
+    fFile.innerHTML = '<label>📁 Nazwa pliku</label><input type="text" value="'+escHtml(rec.fileName)+'" readonly style="opacity:0.7;cursor:default">';
     body.appendChild(fFile);
 
-    // Latitude / Longitude z podświetleniem błędów
-    var latError = rec.gpsError && !rec.lat;
-    var lngError = rec.gpsError && !rec.lng;
-
     var row2 = document.createElement("div"); row2.className = "field-row";
-    row2.innerHTML =
-      '<div class="field' + (latError ? ' field-error' : '') + '" id="f-lat-wrap-' + rec.id + '"><label>Latitude' + (latError ? ' ⚠️ Korekta!' : '') + '</label><input type="text" id="f-lat-' + rec.id + '" value="' + escHtml(rec.lat) + '" placeholder="51.7592" oninput="updateRecordField(' + rec.id + ',\'lat\',this.value)">' +
-        (latError ? '<div class="gps-error-hint">Nie udało się przeliczyć — wpisz ręcznie na podstawie surowego GPS poniżej</div>' : '') +
-      '</div>' +
-      '<div class="field' + (lngError ? ' field-error' : '') + '" id="f-lng-wrap-' + rec.id + '"><label>Longitude' + (lngError ? ' ⚠️ Korekta!' : '') + '</label><input type="text" id="f-lng-' + rec.id + '" value="' + escHtml(rec.lng) + '" placeholder="19.4560" oninput="updateRecordField(' + rec.id + ',\'lng\',this.value)">' +
-        (lngError ? '<div class="gps-error-hint">Nie udało się przeliczyć — wpisz ręcznie na podstawie surowego GPS poniżej</div>' : '') +
-      '</div>';
+    row2.innerHTML = '<div class="field"><label>Latitude</label><input type="text" id="f-lat-'+rec.id+'" value="'+escHtml(rec.lat)+'" placeholder="51.7592" oninput="updateRecordField('+rec.id+',\'lat\',this.value)"></div>'
+      + '<div class="field"><label>Longitude</label><input type="text" id="f-lng-'+rec.id+'" value="'+escHtml(rec.lng)+'" placeholder="19.4560" oninput="updateRecordField('+rec.id+',\'lng\',this.value)"></div>';
     body.appendChild(row2);
 
-    // ── Surowy zapis GPS (od AI, bez przeliczania) ──
-    if (rec.rawLat || rec.rawLng) {
-      var rawGpsDiv = document.createElement("div");
-      rawGpsDiv.className = "field-row";
-      rawGpsDiv.style.marginBottom = "12px";
-      rawGpsDiv.innerHTML =
-        '<div class="raw-gps-field"><span class="rg-label">Surowy Lat: </span><span class="rg-val">' + escHtml(rec.rawLat || "(brak)") + '</span></div>' +
-        '<div class="raw-gps-field"><span class="rg-label">Surowy Lng: </span><span class="rg-val">' + escHtml(rec.rawLng || "(brak)") + '</span></div>';
-      body.appendChild(rawGpsDiv);
-    }
-
     var fInfo = document.createElement("div"); fInfo.className = "field";
-    fInfo.innerHTML = '<label>Dodatkowe info</label><input type="text" id="f-info-' + rec.id + '" value="' + escHtml(rec.info) + '" placeholder="np. sektor A3" oninput="updateRecordField(' + rec.id + ',\'info\',this.value)">';
+    fInfo.innerHTML = '<label>Dodatkowe info</label><input type="text" id="f-info-'+rec.id+'" value="'+escHtml(rec.info)+'" placeholder="np. sektor A3" oninput="updateRecordField('+rec.id+',\'info\',this.value)">';
     body.appendChild(fInfo);
 
     // Buttons row
     var btnRow = document.createElement("div");
     btnRow.style.cssText = "display:flex;gap:8px;margin-top:14px";
-    btnRow.innerHTML = '<button class="btn btn-success btn-sm" style="flex:1" onclick="sendSingle(' + rec.id + ')" id="btn-send-' + rec.id + '">📤 Wyślij</button>' +
-      '<button class="btn btn-outline btn-sm" style="width:auto" onclick="removeRecord(' + rec.id + ')">🗑️</button>';
+    btnRow.innerHTML = '<button class="btn btn-success btn-sm" style="flex:1" onclick="sendSingle('+rec.id+')" id="btn-send-'+rec.id+'">📤 Wyślij</button>'
+      + '<button class="btn btn-outline btn-sm" style="width:auto" onclick="removeRecord('+rec.id+')">🗑️</button>';
     body.appendChild(btnRow);
 
     card.appendChild(body);
@@ -1102,19 +1180,11 @@ function updateRecordField(id, field, value) {
   var rec = records.find(function(r) { return r.id === id; });
   if (!rec) return;
   rec[field] = value;
+  // Update header preview
   var nameEl = document.getElementById("rh-name-" + id);
   var subEl = document.getElementById("rh-sub-" + id);
-  if (nameEl) nameEl.textContent = (rec.imie + " " + rec.nazwisko).trim() || "Bez nazwy";
+  if (nameEl) nameEl.textContent = rec.nazwa || "Bez nazwy";
   if (subEl) subEl.textContent = (rec.daty || "brak dat") + "  •  " + (rec.fileName || "");
-  // Jeśli użytkownik wpisze poprawny GPS, usuń błąd
-  if (field === "lat" && value.trim()) {
-    var wrap = document.getElementById("f-lat-wrap-" + id);
-    if (wrap) wrap.classList.remove("field-error");
-  }
-  if (field === "lng" && value.trim()) {
-    var wrap = document.getElementById("f-lng-wrap-" + id);
-    if (wrap) wrap.classList.remove("field-error");
-  }
 }
 
 function removeRecord(id) {
@@ -1136,10 +1206,10 @@ function updateCounters() {
 }
 
 // ╔══════════════════════════════════════════════════════════════════╗
-// ║  WYSYŁANIE                                                        ║
+// ║  WYSYŁANIE — obsługa Cloudflare Worker + fallback Sheets          ║
 // ╚══════════════════════════════════════════════════════════════════╝
 async function sendRecord(rec) {
-  var nazwa = (rec.imie.trim() + " " + rec.nazwisko.trim()).trim();
+  var nazwa = rec.nazwa.trim();
   var daty = rec.daty.trim();
   var lat = rec.lat.trim() ? parseFloat(rec.lat) : null;
   var lng = rec.lng.trim() ? parseFloat(rec.lng) : null;
@@ -1150,6 +1220,7 @@ async function sendRecord(rec) {
   var name = nazwa + (daty ? " (" + daty + ")" : "");
 
   if (CLOUDFLARE_WORKER_URL) {
+    // ── Przez Cloudflare Worker (haszowanie IP po stronie Workera) ──
     var res = await fetch(CLOUDFLARE_WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1160,16 +1231,23 @@ async function sendRecord(rec) {
     if (!res.ok || data.error) throw new Error(data.error || "Błąd Workera: " + res.status);
     return data;
   } else {
+    // ── Bezpośrednio do Google Sheets (bez haszowania IP) ──
     var customId = crypto.randomUUID();
     var res = await fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        action: "add", id: customId, miejsce: name,
-        lat: lat || "", lng: lng || "", url: "",
-        hash_ip: "", ip: info || "",
+        action: "add",
+        id: customId,
+        miejsce: name,
+        lat: lat || "",
+        lng: lng || "",
+        url: "",
+        hash_ip: "",
+        ip: info || "",
       }),
     });
+    // Google Apps Script redirects — res might be opaque
     var data;
     try { data = await res.json(); } catch(ex) { data = { status: "success" }; }
     if (data.status === "error") throw new Error(data.message || "Błąd Google Sheets");
@@ -1193,7 +1271,7 @@ async function sendSingle(id) {
     body.classList.remove("open");
     btn.textContent = "✅ Wysłano";
     updateCounters();
-    showToast("✅ Wysłano: " + (rec.imie + " " + rec.nazwisko).trim(), "success");
+    showToast("✅ Wysłano: " + (rec.nazwa || rec.fileName), "success");
   } catch(err) {
     btn.disabled = false; btn.textContent = "📤 Wyślij";
     var badge = document.getElementById("badge-" + id);
