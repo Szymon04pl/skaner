@@ -409,13 +409,12 @@ function updateApiStatus() {
   if (HAS_AI_KEY) {
     el.style.background = "var(--success-bg)"; el.style.border = "1px solid var(--success)"; el.style.color = "var(--success)";
     var provName = AI_PROVIDER === "openai" ? "OpenAI GPT-4o-mini" : "Gemini 1.5 Flash";
-    el.textContent = "✅ " + provName + " aktywne — analiza zdjęć włączona";
-    document.getElementById("apiKeyInput").value = activeKey.slice(0, 8) + "…" + activeKey.slice(-4);
+    el.textContent = "\u2705 " + provName + " aktywne \u2014 analiza zdj\u0119\u0107 w\u0142\u0105czona";
+    document.getElementById("apiKeyInput").value = activeKey.slice(0, 8) + "\u2026" + activeKey.slice(-4);
   } else {
     el.style.background = "var(--error-bg)"; el.style.border = "1px solid var(--error)"; el.style.color = "var(--error)";
-    el.textContent = "❌ Brak klucza API — dane wpisz ręcznie";
+    el.textContent = "\u274c Brak klucza API \u2014 dane wpisz r\u0119cznie";
   }
-  // Style provider buttons
   var btnO = document.getElementById("btnProvOpenAI");
   var btnG = document.getElementById("btnProvGemini");
   if (btnO && btnG) {
@@ -436,17 +435,17 @@ function updateWorkerStatus() {
   var el = document.getElementById("workerStatus");
   if (CLOUDFLARE_WORKER_URL) {
     el.style.background = "var(--success-bg)"; el.style.border = "1px solid var(--success)"; el.style.color = "var(--success)";
-    el.textContent = "☁️ Worker aktywny — dane przez Cloudflare (z haszowaniem IP)";
+    el.textContent = "\u2601\ufe0f Worker aktywny \u2014 dane przez Cloudflare (z haszowaniem IP)";
     document.getElementById("workerUrlInput").value = CLOUDFLARE_WORKER_URL;
   } else {
     el.style.background = "var(--surface2)"; el.style.border = "1px solid var(--border)"; el.style.color = "var(--text2)";
-    el.textContent = "📡 Brak Workera — wysyłka bezpośrednio do Google Sheets";
+    el.textContent = "\ud83d\udce1 Brak Workera \u2014 wysy\u0142ka bezpo\u015brednio do Google Sheets";
   }
 }
 
 function saveApiKey() {
   var key = document.getElementById("apiKeyInput").value.trim();
-  if (!key || key.length < 10) { showToast("Wklej prawidłowy klucz API", "error"); return; }
+  if (!key || key.length < 10) { showToast("Wklej prawid\u0142owy klucz API", "error"); return; }
   if (AI_PROVIDER === "openai") {
     localStorage.setItem("OPENAI_API_KEY", key);
     OPENAI_API_KEY = key;
@@ -456,25 +455,25 @@ function saveApiKey() {
   }
   HAS_AI_KEY = true;
   updateApiStatus();
-  showToast("✅ Klucz " + (AI_PROVIDER === "openai" ? "OpenAI" : "Gemini") + " zapisany!", "success");
+  showToast("\u2705 Klucz " + (AI_PROVIDER === "openai" ? "OpenAI" : "Gemini") + " zapisany!", "success");
 }
 
 function switchProvider(prov) {
   AI_PROVIDER = prov;
   localStorage.setItem("AI_PROVIDER", prov);
   var activeKey = prov === "openai" ? OPENAI_API_KEY : GEMINI_API_KEY;
-  document.getElementById("apiKeyInput").value = activeKey ? activeKey.slice(0, 8) + "…" + activeKey.slice(-4) : "";
+  document.getElementById("apiKeyInput").value = activeKey ? activeKey.slice(0, 8) + "\u2026" + activeKey.slice(-4) : "";
   document.getElementById("apiKeyInput").placeholder = prov === "openai" ? "sk-proj-..." : "AIzaSy...";
   updateApiStatus();
 }
 
 function saveWorkerUrl() {
   var url = document.getElementById("workerUrlInput").value.trim();
-  if (url && !url.startsWith("http")) { showToast("URL musi zaczynać się od https://", "error"); return; }
+  if (url && !url.startsWith("http")) { showToast("URL musi zaczyna\u0107 si\u0119 od https://", "error"); return; }
   localStorage.setItem("CLOUDFLARE_WORKER_URL", url);
   CLOUDFLARE_WORKER_URL = url;
   updateWorkerStatus();
-  showToast(url ? "☁️ Worker URL zapisany!" : "📡 Worker usunięty — wysyłka bezpośrednio", "success");
+  showToast(url ? "\u2601\ufe0f Worker URL zapisany!" : "\ud83d\udce1 Worker usuni\u0119ty \u2014 wysy\u0142ka bezpo\u015brednio", "success");
 }
 
 async function testApiKey() {
@@ -482,11 +481,11 @@ async function testApiKey() {
   if (!key || key.length < 10) { showToast("Najpierw wklej i zapisz klucz API", "error"); return; }
   var btn = document.getElementById("btnTestKey");
   var result = document.getElementById("testResult");
-  btn.disabled = true; btn.textContent = "⏳...";
+  btn.disabled = true; btn.textContent = "\u23f3...";
   result.style.padding = "8px 12px";
   result.style.background = "var(--surface2)"; result.style.border = "1px solid var(--border)"; result.style.color = "var(--text2)";
   var provName = AI_PROVIDER === "openai" ? "OpenAI GPT-4o-mini" : "Gemini 1.5 Flash";
-  result.textContent = "⏳ Testuję połączenie z " + provName + "...";
+  result.textContent = "\u23f3 Testuj\u0119 po\u0142\u0105czenie z " + provName + "...";
 
   try {
     var res, data, text;
@@ -496,7 +495,7 @@ async function testApiKey() {
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + key },
         body: JSON.stringify({
           model: "gpt-4o-mini",
-          messages: [{ role: "user", content: "Odpowiedz jednym słowem: działa" }],
+          messages: [{ role: "user", content: "Odpowiedz jednym s\u0142owem: dzia\u0142a" }],
           temperature: 0, max_tokens: 10
         })
       });
@@ -504,28 +503,27 @@ async function testApiKey() {
         data = await res.json();
         text = ""; try { text = data.choices[0].message.content; } catch(e) {}
         result.style.background = "var(--success-bg)"; result.style.border = "1px solid var(--success)"; result.style.color = "var(--success)";
-        result.textContent = '✅ Klucz działa! GPT-4o-mini odpowiedział: "' + text.trim().slice(0, 50) + '"';
+        result.textContent = '\u2705 Klucz dzia\u0142a! GPT-4o-mini odpowiedzia\u0142: "' + text.trim().slice(0, 50) + '"';
       } else if (res.status === 401) {
         result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
-        result.textContent = "❌ Błąd 401: Klucz jest nieprawidłowy. Sprawdź czy skopiowałeś cały klucz (zaczyna się od sk-).";
+        result.textContent = "\u274c B\u0142\u0105d 401: Klucz jest nieprawid\u0142owy.";
       } else if (res.status === 429) {
         result.style.background = "#422006"; result.style.border = "1px solid var(--warning)"; result.style.color = "var(--warning)";
-        result.textContent = "⚠️ Klucz poprawny, ale przekroczono limit lub brak środków. Sprawdź billing na platform.openai.com.";
+        result.textContent = "\u26a0\ufe0f Klucz poprawny, ale przekroczono limit lub brak \u015brodk\u00f3w.";
       } else if (res.status === 403) {
         result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
-        result.textContent = "❌ Błąd 403: Klucz nie ma uprawnień. Sprawdź Permissions na platform.openai.com/api-keys.";
+        result.textContent = "\u274c B\u0142\u0105d 403: Klucz nie ma uprawnie\u0144.";
       } else {
         var errText = await res.text().catch(function() { return ""; });
         result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
-        result.textContent = "❌ Błąd " + res.status + ": " + errText.slice(0, 150);
+        result.textContent = "\u274c B\u0142\u0105d " + res.status + ": " + errText.slice(0, 150);
       }
     } else {
-      // Gemini test
       res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=" + key, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: "Odpowiedz jednym słowem: działa" }] }],
+          contents: [{ parts: [{ text: "Odpowiedz jednym s\u0142owem: dzia\u0142a" }] }],
           generationConfig: { temperature: 0, maxOutputTokens: 10 }
         })
       });
@@ -533,21 +531,21 @@ async function testApiKey() {
         data = await res.json();
         text = ""; try { text = data.candidates[0].content.parts[0].text; } catch(e) {}
         result.style.background = "var(--success-bg)"; result.style.border = "1px solid var(--success)"; result.style.color = "var(--success)";
-        result.textContent = '✅ Klucz działa! Gemini odpowiedział: "' + text.trim().slice(0, 50) + '"';
+        result.textContent = '\u2705 Klucz dzia\u0142a! Gemini odpowiedzia\u0142: "' + text.trim().slice(0, 50) + '"';
       } else if (res.status === 429) {
         result.style.background = "#422006"; result.style.border = "1px solid var(--warning)"; result.style.color = "var(--warning)";
-        result.textContent = "⚠️ Klucz poprawny, ale przekroczono limit. Poczekaj 1-2 minuty.";
+        result.textContent = "\u26a0\ufe0f Klucz poprawny, ale przekroczono limit. Poczekaj 1-2 minuty.";
       } else {
         var errText = await res.text().catch(function() { return ""; });
         result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
-        result.textContent = "❌ Błąd " + res.status + ": " + errText.slice(0, 150);
+        result.textContent = "\u274c B\u0142\u0105d " + res.status + ": " + errText.slice(0, 150);
       }
     }
   } catch(e) {
     result.style.background = "var(--error-bg)"; result.style.border = "1px solid var(--error)"; result.style.color = "var(--error)";
-    result.textContent = "❌ Błąd sieci: " + e.message;
+    result.textContent = "\u274c B\u0142\u0105d sieci: " + e.message;
   }
-  btn.disabled = false; btn.textContent = "🧪 Test";
+  btn.disabled = false; btn.textContent = "\ud83e\uddea Test";
 }
 
 document.addEventListener("DOMContentLoaded", updateApiStatus);
@@ -613,21 +611,21 @@ function renderGrid() {
     countEl.textContent = ""; btnEl.classList.add("hidden"); return;
   }
   dropEl.classList.add("hidden"); gridEl.classList.remove("hidden"); btnEl.classList.remove("hidden");
-  countEl.textContent = photos.length + " zdjęć";
+  countEl.textContent = photos.length + " zdj\u0119\u0107";
   while (gridEl.firstChild) gridEl.removeChild(gridEl.firstChild);
   photos.forEach(function(p, idx) {
     var wrapper = document.createElement("div"); wrapper.className = "photo-item";
-    var img = document.createElement("img"); img.src = p.dataUrl; img.alt = "Zdjęcie " + (idx + 1); wrapper.appendChild(img);
+    var img = document.createElement("img"); img.src = p.dataUrl; img.alt = "Zdj\u0119cie " + (idx + 1); wrapper.appendChild(img);
     var badge = document.createElement("div"); badge.className = "p-badge"; badge.textContent = "#" + (idx + 1); wrapper.appendChild(badge);
-    var del = document.createElement("button"); del.className = "p-del"; del.textContent = "✕"; del.onclick = function() { removePhoto(p.id); }; wrapper.appendChild(del);
+    var del = document.createElement("button"); del.className = "p-del"; del.textContent = "\u2715"; del.onclick = function() { removePhoto(p.id); }; wrapper.appendChild(del);
     if (p.status === "processing") { var st = document.createElement("div"); st.className = "p-status s-proc"; st.textContent = "OCR..."; wrapper.appendChild(st); }
-    else if (p.status === "done") { var st2 = document.createElement("div"); st2.className = "p-status s-done"; st2.textContent = "✓ OK"; wrapper.appendChild(st2); }
-    else if (p.status === "error") { var st3 = document.createElement("div"); st3.className = "p-status s-err"; st3.textContent = "✗"; wrapper.appendChild(st3); }
+    else if (p.status === "done") { var st2 = document.createElement("div"); st2.className = "p-status s-done"; st2.textContent = "\u2713 OK"; wrapper.appendChild(st2); }
+    else if (p.status === "error") { var st3 = document.createElement("div"); st3.className = "p-status s-err"; st3.textContent = "\u2717"; wrapper.appendChild(st3); }
     gridEl.appendChild(wrapper);
   });
   var addTile = document.createElement("div"); addTile.className = "add-tile"; addTile.onclick = openFilePicker;
   var addInner = document.createElement("div"); addInner.className = "add-tile-inner";
-  var plus = document.createElement("div"); plus.className = "at-plus"; plus.textContent = "＋"; addInner.appendChild(plus);
+  var plus = document.createElement("div"); plus.className = "at-plus"; plus.textContent = "\uff0b"; addInner.appendChild(plus);
   var addLabel = document.createElement("span"); addLabel.textContent = "Dodaj"; addInner.appendChild(addLabel);
   addTile.appendChild(addInner); gridEl.appendChild(addTile);
 }
@@ -645,16 +643,16 @@ function setStep(id, state, text) {
   if (text) document.getElementById(id + "Text").textContent = text;
   var icon = document.getElementById(id + "Icon");
   if (state === "active") icon.innerHTML = '<div class="spinner"></div>';
-  else if (state === "done") icon.textContent = "✓";
-  else if (state === "error") icon.textContent = "✗";
+  else if (state === "done") icon.textContent = "\u2713";
+  else if (state === "error") icon.textContent = "\u2717";
 }
 function resetSteps() {
   ["stepGps","stepOcr","stepReady"].forEach(function(id, i) {
     document.getElementById(id).className = "step";
     document.getElementById(id + "Icon").textContent = String(i + 1);
   });
-  document.getElementById("stepGpsText").textContent = "Odczytuję GPS z EXIF...";
-  document.getElementById("stepOcrText").textContent = "🤖 Analiza AI...";
+  document.getElementById("stepGpsText").textContent = "Odczytuj\u0119 GPS z EXIF...";
+  document.getElementById("stepOcrText").textContent = "\ud83e\udd16 Analiza AI...";
   document.getElementById("stepReadyText").textContent = "Gotowe do zapisu";
 }
 
@@ -662,7 +660,6 @@ function resetSteps() {
 // ║  EXIF GPS                                                         ║
 // ╚══════════════════════════════════════════════════════════════════╝
 function exifVal(v) {
-  // EXIF values can be plain numbers OR objects with numerator/denominator
   if (v == null) return 0;
   if (typeof v === "number") return v;
   if (typeof v === "object" && v.numerator != null && v.denominator != null) {
@@ -701,43 +698,26 @@ function readExifGps(file) {
 }
 
 // ╔══════════════════════════════════════════════════════════════════╗
-// ║  KONWERTER DMS → DECIMAL (dla surowych stringów z AI)             ║
+// ║  PARSER DZIESIĘTNYCH GPS (surowy string → liczba)                  ║
 // ╚══════════════════════════════════════════════════════════════════╝
-function convertDMSToDecimal(dmsString) {
-  if (!dmsString || typeof dmsString !== "string") return null;
-  var s = dmsString.trim();
-  // Normalizuj znaki
-  s = s.replace(/[˚º⁰]/g, "°").replace(/[′`‛']/g, "'").replace(/[″‟˝"]/g, '"').replace(/''/g, '"');
-  // Regex: 52°51'53" N  lub  N 52°51'53"  lub  52 51 53 N  lub  52°51'53"
-  var re = /([NSEW])?\s*(\d{1,3})\s*[°\s]\s*(\d{1,2})\s*['\s]\s*(\d{1,2}(?:[.,]\d+)?)\s*"?\s*([NSEW])?/i;
-  var m = re.exec(s);
-  if (!m) {
-    // Spróbuj format dziesiętny: "52.8647 N" lub "52.8647"
-    var decRe = /([NSEW])?\s*(\d{1,3}[.,]\d+)\s*°?\s*([NSEW])?/i;
-    var dm = decRe.exec(s);
-    if (dm) {
-      var val = parseFloat(dm[2].replace(",", "."));
-      var dir = (dm[1] || dm[3] || "").toUpperCase();
-      if (dir === "S" || dir === "W") val = -val;
-      return parseFloat(val.toFixed(6));
-    }
-    return null;
-  }
-  var dir = (m[1] || m[5] || "").toUpperCase();
-  var deg = parseFloat(m[2]) || 0;
-  var min = parseFloat(m[3]) || 0;
-  var sec = parseFloat((m[4] || "0").replace(",", ".")) || 0;
-  var dec = deg + (min / 60) + (sec / 3600);
-  if (dir === "S" || dir === "W") dec = -dec;
-  return parseFloat(dec.toFixed(6));
+function parseDecimalGps(rawStr) {
+  if (!rawStr || typeof rawStr !== "string") return null;
+  var s = rawStr.trim().replace(",", ".");
+  // Wyciągnij liczbę i opcjonalny kierunek: "52.864722 N" lub "52.864722" lub "N 52.864722"
+  var m = s.match(/([NSEW])?\s*(-?\d{1,3}(?:\.\d+)?)\s*[°]?\s*([NSEW])?/i);
+  if (!m) return null;
+  var val = parseFloat(m[2]);
+  if (isNaN(val)) return null;
+  var dir = (m[1] || m[3] || "").toUpperCase();
+  if (dir === "S" || dir === "W") val = -val;
+  return parseFloat(val.toFixed(6));
 }
 
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  AI — analiza zdjęcia (tekst + GPS)                               ║
 // ╚══════════════════════════════════════════════════════════════════╝
 
-var AI_PROMPT = 'Odczytaj tekst z nagrobka oraz tekst stempla GPS z rogu zdjęcia. Nie wykonuj żadnych obliczeń matematycznych. Zwróć surowe ciągi znaków. Jeśli widzisz współrzędne, zwróć je dokładnie w takim formacie, w jakim są napisane (np. 52°51\'53\" N). W polu raw_text umieść całą transkrypcję tekstu z nagrobka (wiersz po wierszu, oddzielone \\n). W polu imie wpisz TYLKO imię (bez nazwiska, bez ŚP). W polu nazwisko wpisz TYLKO nazwisko. W polu daty wpisz daty (np. 1920-1985). Jeśli brakuje informacji, zostaw pole jako pusty string. ODPOWIEDZ WYŁĄCZNIE czystym JSON bez markdown:\\n{\"raw_lat\": \"\", \"raw_lng\": \"\", \"raw_text\": \"\", \"imie\": \"\", \"nazwisko\": \"\", \"daty\": \"\"}';
-// Stary prompt usunięty. var _OLD_PROMPT_REMOVED = 'Jesteś profesjonalnym asystentem inwentaryzacji cmentarzy. Spójrz na zdjęcie nagrobka i:\n\n1. Wyodrębnij Imię i Nazwisko (pomiń modlitwy, cytaty, ŚP, Ave Maria, R.I.P., \"Tu spoczywa\" itp.). Jeśli jest kilka osób, weź pierwszą.\n2. Wyodrębnij datę urodzenia i zgonu (zwróć tylko lata, np. \"1920-1985\"). Jeśli pełne daty — też zamień na lata.\n3. Odczytaj współrzędne GPS ze stempla/napisu na zdjęciu (np. 52°12\'56\" N, 21°3\'55\" E albo 42°21\'53\", 31°6\'1\") i przelicz je na format dziesiętny (np. 52.2155). Jeśli brak liter kierunku (N/S/E/W), załóż N dla pierwszej i E dla drugiej.\n4. Jeśli nie widzisz współrzędnych GPS na zdjęciu, zwróć puste stringi dla lat i lng.\n\nZwróć wynik WYŁĄCZNIE jako czysty JSON (bez markdown, bez ```json):\n{"nazwa": "Imię Nazwisko", "daty": "RRRR-RRRR", "lat": "52.2155", "lng": "21.0653"}';
+var AI_PROMPT = 'Odczytaj tekst z nagrobka oraz liczby dziesi\u0119tne GPS widoczne na stemplu zdj\u0119cia (np. 52.864722 N, 21.101111 E). Zwr\u00f3\u0107 te liczby jako surowy tekst w polach raw_lat i raw_lng. Nie wykonuj \u017cadnych oblicze\u0144. W polu raw_text umie\u015b\u0107 ca\u0142\u0105 transkrypcj\u0119 tekstu z nagrobka (wiersz po wierszu, oddzielone \\n). W polu imie wpisz TYLKO imi\u0119 (bez nazwiska, bez \u015aP). W polu nazwisko wpisz TYLKO nazwisko. W polu daty wpisz daty (np. 1920-1985). Je\u015bli brakuje informacji, zostaw pole jako pusty string. ODPOWIEDZ WY\u0141\u0104CZNIE czystym JSON bez markdown:\\n{\\"raw_lat\\": \\"\\", \\"raw_lng\\": \\"\\", \\"raw_text\\": \\"\\", \\"imie\\": \\"\\", \\"nazwisko\\": \\"\\", \\"daty\\": \\"\\"}';
 
 async function analyzeWithAI(dataUrl) {
   var result;
@@ -746,13 +726,13 @@ async function analyzeWithAI(dataUrl) {
   } else {
     result = await analyzeWithGemini(dataUrl);
   }
-  // Konwertuj surowe DMS do decimal po stronie JS
+  // Parsuj surowe liczby dziesiętne GPS
   if (result.raw_lat && !result.lat) {
-    var decLat = convertDMSToDecimal(result.raw_lat);
+    var decLat = parseDecimalGps(result.raw_lat);
     if (decLat !== null) result.lat = String(decLat);
   }
   if (result.raw_lng && !result.lng) {
-    var decLng = convertDMSToDecimal(result.raw_lng);
+    var decLng = parseDecimalGps(result.raw_lng);
     if (decLng !== null) result.lng = String(decLng);
   }
   // Złóż nazwa z imie + nazwisko jeśli brak
@@ -773,7 +753,7 @@ async function analyzeWithOpenAI(dataUrl) {
     body: JSON.stringify({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "Odpowiadaj WYŁĄCZNIE czystym JSON, bez markdown, bez ```." },
+        { role: "system", content: "Odpowiadaj WY\u0141\u0104CZNIE czystym JSON, bez markdown, bez ```." },
         { role: "user", content: [
           { type: "text", text: AI_PROMPT },
           { type: "image_url", image_url: { url: dataUrl, detail: "low" } }
@@ -789,14 +769,14 @@ async function analyzeWithOpenAI(dataUrl) {
     analyzeWithOpenAI._retries++;
     if (analyzeWithOpenAI._retries <= 2) {
       var waitSec = analyzeWithOpenAI._retries * 5;
-      console.log("OpenAI 429 — czekam " + waitSec + "s i ponawiam (próba " + analyzeWithOpenAI._retries + "/2)...");
+      console.log("OpenAI 429 \u2014 czekam " + waitSec + "s i ponawiam (pr\u00f3ba " + analyzeWithOpenAI._retries + "/2)...");
       await new Promise(function(r) { setTimeout(r, waitSec * 1000); });
       var result = await analyzeWithOpenAI(dataUrl);
       analyzeWithOpenAI._retries = 0;
       return result;
     }
     analyzeWithOpenAI._retries = 0;
-    throw new Error("OpenAI API: Przekroczono limit zapytań (429). Poczekaj minutę i spróbuj ponownie.");
+    throw new Error("OpenAI API: Przekroczono limit zapyta\u0144 (429). Poczekaj minut\u0119 i spr\u00f3buj ponownie.");
   }
   if (!res.ok) {
     var errText = await res.text().catch(function() { return ""; });
@@ -806,7 +786,7 @@ async function analyzeWithOpenAI(dataUrl) {
   var data = await res.json();
   var text = "";
   try { text = data.choices[0].message.content; } catch(e) {
-    throw new Error("OpenAI nie zwrócił odpowiedzi");
+    throw new Error("OpenAI nie zwr\u00f3ci\u0142 odpowiedzi");
   }
   console.log("OpenAI raw response:", text);
   return parseAIResponse(text);
@@ -843,14 +823,14 @@ async function analyzeWithGemini(dataUrl) {
     analyzeWithGemini._retries++;
     if (analyzeWithGemini._retries <= 2) {
       var waitSec = analyzeWithGemini._retries * 5;
-      console.log("Gemini 429 — czekam " + waitSec + "s...");
+      console.log("Gemini 429 \u2014 czekam " + waitSec + "s...");
       await new Promise(function(r) { setTimeout(r, waitSec * 1000); });
       var result = await analyzeWithGemini(dataUrl);
       analyzeWithGemini._retries = 0;
       return result;
     }
     analyzeWithGemini._retries = 0;
-    throw new Error("Gemini API: Przekroczono limit zapytań (429).");
+    throw new Error("Gemini API: Przekroczono limit zapyta\u0144 (429).");
   }
   if (!res.ok) {
     var errText = await res.text().catch(function() { return ""; });
@@ -860,7 +840,7 @@ async function analyzeWithGemini(dataUrl) {
   var data = await res.json();
   var text = "";
   try { text = data.candidates[0].content.parts[0].text; } catch(e) {
-    throw new Error("Gemini nie zwrócił odpowiedzi");
+    throw new Error("Gemini nie zwr\u00f3ci\u0142 odpowiedzi");
   }
   console.log("Gemini raw response:", text);
   return parseAIResponse(text);
@@ -876,12 +856,12 @@ function parseAIResponse(text) {
     var jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       try { parsed = JSON.parse(jsonMatch[0]); } catch(e2) {
-        console.error("Nie udało się sparsować JSON:", text);
-        throw new Error("AI nie zwróciło prawidłowego JSON: " + text.slice(0, 200));
+        console.error("Nie uda\u0142o si\u0119 sparsowa\u0107 JSON:", text);
+        throw new Error("AI nie zwr\u00f3ci\u0142o prawid\u0142owego JSON: " + text.slice(0, 200));
       }
     } else {
       console.error("Brak JSON w odpowiedzi:", text);
-      throw new Error("AI nie zwróciło prawidłowego JSON: " + text.slice(0, 200));
+      throw new Error("AI nie zwr\u00f3ci\u0142o prawid\u0142owego JSON: " + text.slice(0, 200));
     }
   }
   return {
@@ -914,106 +894,6 @@ function cleanText(raw) {
   TRASH.forEach(function(re) { t = t.replace(re, " "); });
   return t.replace(/[ \t]+/g, " ").trim();
 }
-// ╔══════════════════════════════════════════════════════════════════╗
-// ║  GPS Z TEKSTU OCR (DMS → Decimal)                                 ║
-// ╚══════════════════════════════════════════════════════════════════╝
-function convertDMSTextToDecimal(deg, min, sec, dir) {
-  var d = parseFloat(deg) || 0;
-  var m = parseFloat(min) || 0;
-  var s = parseFloat(sec) || 0;
-  var dec = d + (m / 60) + (s / 3600);
-  if (dir === "S" || dir === "W") dec = -dec;
-  return parseFloat(dec.toFixed(6));
-}
-
-function parseGpsFromText(raw) {
-  // Obsługiwane formaty:
-  //   42°21'53"N 31°6'1"E          — DMS z kierunkiem
-  //   N 42°21'53"                   — kierunek z przodu
-  //   42°21'53", 31°6'1"           — DMS BEZ kierunku (para)
-  //   42°21'53" 31°6'1"            — DMS BEZ kierunku (spacja)
-  //   52.2155°N / 52.2155 N        — dziesiętne z kierunkiem
-  //   52.2155, 19.4560             — dziesiętne bez kierunku
-  //   52 12 56 N                   — spacje + kierunek
-
-  var result = { lat: null, lng: null };
-
-  // Normalizuj znaki specjalne → standardowe °'"
-  var t = raw
-    .replace(/[˚º⁰]/g, "°")
-    .replace(/[′`‛]/g, "'")
-    .replace(/[″‟˝]/g, '"')
-    .replace(/''/g, '"');
-
-  // ── DMS regex (łapie Z kierunkiem i BEZ) ──
-  // Dopasowuje: 42°21'53"N  lub  N42°21'53"  lub  42°21'53"
-  var dmsRe = /([NSEW])?\s*(\d{1,3})\s*°\s*(\d{1,2})\s*['′]\s*(\d{1,2}(?:[.,]\d+)?)\s*[""″]?\s*([NSEW])?/gi;
-  var dmsMatches = [];
-  var m;
-  while ((m = dmsRe.exec(t)) !== null) {
-    var dir = (m[1] || m[5] || "").toUpperCase();
-    var dec = convertDMSTextToDecimal(m[2], m[3], m[4].replace(",", "."), dir);
-    dmsMatches.push({ dir: dir, val: dec, deg: parseFloat(m[2]) });
-  }
-
-  // ── Decimal z kierunkiem: 52.2155°N lub 52.2155 N ──
-  var decRe = /([NSEW])?\s*(\d{1,3}[.,]\d+)\s*°?\s*([NSEW])/gi;
-  while ((m = decRe.exec(t)) !== null) {
-    var dir2 = (m[1] || m[3] || "").toUpperCase();
-    var val = parseFloat(m[2].replace(",", "."));
-    if (dir2 === "S" || dir2 === "W") val = -val;
-    dmsMatches.push({ dir: dir2, val: parseFloat(val.toFixed(6)), deg: Math.abs(val) });
-  }
-
-  // ── Spacje + kierunek: 52 12 56 N ──
-  var spaceRe = /(\d{1,3})\s+(\d{1,2})\s+(\d{1,2}(?:[.,]\d+)?)\s*([NSEW])/gi;
-  while ((m = spaceRe.exec(t)) !== null) {
-    var dir3 = m[4].toUpperCase();
-    var dec3 = convertDMSTextToDecimal(m[1], m[2], m[3].replace(",", "."), dir3);
-    dmsMatches.push({ dir: dir3, val: dec3, deg: parseFloat(m[1]) });
-  }
-
-  // ── Przypisz dopasowania Z kierunkiem ──
-  for (var i = 0; i < dmsMatches.length; i++) {
-    var item = dmsMatches[i];
-    if (!item.dir) continue;
-    if ((item.dir === "N" || item.dir === "S") && result.lat === null) result.lat = item.val;
-    if ((item.dir === "E" || item.dir === "W") && result.lng === null) result.lng = item.val;
-  }
-
-  // ── Jeśli nie znaleziono z kierunkiem — szukaj par BEZ kierunku ──
-  if (result.lat === null && result.lng === null) {
-    // Zbierz DMS bez kierunku
-    var noDir = dmsMatches.filter(function(x) { return !x.dir; });
-
-    if (noDir.length >= 2) {
-      // Para DMS: pierwsza = lat, druga = lng
-      result.lat = parseFloat(noDir[0].val.toFixed(6));
-      result.lng = parseFloat(noDir[1].val.toFixed(6));
-    } else {
-      // Szukaj pary liczb dziesiętnych: "52.2155, 19.4560" lub "52.2155 19.4560"
-      var decPairRe = /(\d{1,3}[.,]\d{2,})\s*[,;/\s]\s*(\d{1,3}[.,]\d{2,})/g;
-      var dp = decPairRe.exec(t);
-      if (dp) {
-        result.lat = parseFloat(dp[1].replace(",", "."));
-        result.lng = parseFloat(dp[2].replace(",", "."));
-      }
-    }
-  }
-
-  // Walidacja zakresów
-  if (result.lat !== null && (result.lat < -90 || result.lat > 90)) {
-    // Może zamienione? Spróbuj swap
-    if (result.lng !== null && result.lng >= -90 && result.lng <= 90) {
-      var tmp = result.lat; result.lat = result.lng; result.lng = tmp;
-    } else {
-      result.lat = null;
-    }
-  }
-  if (result.lng !== null && (result.lng < -180 || result.lng > 180)) result.lng = null;
-
-  return (result.lat !== null && result.lng !== null) ? result : null;
-}
 
 function parseData(cleaned) {
   var r = { imie: "", nazwisko: "", daty: "" };
@@ -1025,7 +905,7 @@ function parseData(cleaned) {
   ];
   var dates = [], rest = cleaned;
   pats.forEach(function(p) { var m = cleaned.match(p); if (m) { dates = dates.concat(m); m.forEach(function(x) { rest = rest.replace(x, " "); }); } });
-  r.daty = dates.filter(function(v,i,a) { return a.indexOf(v)===i; }).join(" – ");
+  r.daty = dates.filter(function(v,i,a) { return a.indexOf(v)===i; }).join(" \u2013 ");
   var words = rest.replace(/[^a-zA-ZąćęłńóśźżĄĆĘŁŃÓŚŹŻ\s-]/g, " ").split(/\s+/)
     .filter(function(w) { return w.length >= 2 && /^[A-ZĄĆĘŁŃÓŚŹŻ]/.test(w); });
   if (words.length >= 2) { r.imie = words[0]; r.nazwisko = words.slice(1).join(" "); }
@@ -1039,7 +919,7 @@ function parseData(cleaned) {
 async function startProcessing() {
   if (!photos.length) return;
   var btn = document.getElementById("btnStart");
-  btn.disabled = true; btn.textContent = "⏳ Przetwarzam...";
+  btn.disabled = true; btn.textContent = "\u23f3 Przetwarzam...";
   document.getElementById("statusCard").classList.remove("hidden");
   resetSteps();
   records = [];
@@ -1058,11 +938,11 @@ async function startProcessing() {
     gpsPerPhoto.push(gps || sharedGps);
   }
   if (sharedGps) setStep("stepGps", "done", "GPS z EXIF: " + sharedGps.lat + ", " + sharedGps.lng);
-  else setStep("stepGps", "done", "Brak GPS w EXIF — szukam w tekście OCR");
+  else setStep("stepGps", "done", "Brak GPS w EXIF \u2014 szukam w tek\u015bcie OCR");
 
   // Analiza AI per zdjęcie
   if (!HAS_AI_KEY) {
-    setStep("stepOcr", "done", "AI pominięte (brak klucza API)");
+    setStep("stepOcr", "done", "AI pomini\u0119te (brak klucza API)");
     for (var i = 0; i < photos.length; i++) {
       var gps = gpsPerPhoto[i];
       records.push({
@@ -1077,22 +957,21 @@ async function startProcessing() {
     setStep("stepOcr", "active");
     var aiOk = 0;
     for (var j = 0; j < photos.length; j++) {
-      // Opóźnienie 3s między zdjęciami (poza pierwszym) aby nie przekroczyć limitu
       if (j > 0) {
         var aiName = AI_PROVIDER === "openai" ? "GPT-4o-mini" : "Gemini";
-        setStep("stepOcr", "active", "⏳ Czekam 3s przed zdjęciem " + (j+1) + "/" + photos.length + "...");
+        setStep("stepOcr", "active", "\u23f3 Czekam 3s przed zdj\u0119ciem " + (j+1) + "/" + photos.length + "...");
         await new Promise(function(r) { setTimeout(r, 3000); });
       }
       var aiName = AI_PROVIDER === "openai" ? "GPT-4o-mini" : "Gemini";
       photos[j].status = "processing"; renderGrid();
-      setStep("stepOcr", "active", "🤖 " + aiName + " analizuje zdjęcie " + (j+1) + "/" + photos.length + "...");
+      setStep("stepOcr", "active", "\ud83e\udd16 " + aiName + " analizuje zdj\u0119cie " + (j+1) + "/" + photos.length + "...");
       var aiResult = null;
       try {
         aiResult = await analyzeWithAI(photos[j].dataUrl);
         photos[j].status = "done";
         aiOk++;
       } catch(e) {
-        console.error("Gemini error for photo " + (j+1) + ":", e);
+        console.error("AI error for photo " + (j+1) + ":", e);
         photos[j].status = "error";
       }
       renderGrid();
@@ -1113,7 +992,7 @@ async function startProcessing() {
         rawLngStr = aiResult.raw_lng || "";
       }
 
-      // GPS: priorytet EXIF > AI (skonwertowane DMS)
+      // GPS: priorytet EXIF > AI
       var finalLat = gps ? String(gps.lat) : aiLat;
       var finalLng = gps ? String(gps.lng) : aiLng;
 
@@ -1126,12 +1005,12 @@ async function startProcessing() {
     }
     var aiLabel = AI_PROVIDER === "openai" ? "GPT-4o-mini" : "Gemini";
     setStep("stepOcr", aiOk > 0 ? "done" : "error",
-      aiOk > 0 ? "🤖 " + aiLabel + " przeanalizował " + aiOk + "/" + photos.length + " zdjęć" : aiLabel + " nie rozpoznał danych");
+      aiOk > 0 ? "\ud83e\udd16 " + aiLabel + " przeanalizowa\u0142 " + aiOk + "/" + photos.length + " zdj\u0119\u0107" : aiLabel + " nie rozpozna\u0142 danych");
   }
 
-  setStep("stepReady", "done", records.length + " rekordów gotowych do sprawdzenia");
+  setStep("stepReady", "done", records.length + " rekord\u00f3w gotowych do sprawdzenia");
   renderRecords();
-  btn.disabled = false; btn.textContent = "🔄 Przetwórz ponownie";
+  btn.disabled = false; btn.textContent = "\ud83d\udd04 Przetw\u00f3rz ponownie";
   setTimeout(function() {
     document.getElementById("recordsList").scrollIntoView({ behavior: "smooth", block: "start" });
   }, 200);
@@ -1166,16 +1045,16 @@ function renderRecords() {
     var info = document.createElement("div"); info.className = "record-header-info";
     var nameEl = document.createElement("div"); nameEl.className = "rh-name";
     nameEl.id = "rh-name-" + rec.id;
-    nameEl.textContent = rec.nazwa || ((rec.imie || "") + " " + (rec.nazwisko || "")).trim() || "Zdjęcie #" + (idx + 1);
+    nameEl.textContent = rec.nazwa || ((rec.imie || "") + " " + (rec.nazwisko || "")).trim() || "Zdj\u0119cie #" + (idx + 1);
     info.appendChild(nameEl);
     var sub = document.createElement("div"); sub.className = "rh-sub";
     sub.id = "rh-sub-" + rec.id;
-    sub.textContent = (rec.daty || "brak dat") + "  •  " + rec.fileName;
+    sub.textContent = (rec.daty || "brak dat") + "  \u2022  " + rec.fileName;
     info.appendChild(sub);
     header.appendChild(info);
     var badge = document.createElement("div"); badge.className = "record-badge";
     badge.id = "badge-" + rec.id;
-    if (rec.sendStatus === "sent") { badge.className += " rb-sent"; badge.textContent = "✓ Wysłano"; }
+    if (rec.sendStatus === "sent") { badge.className += " rb-sent"; badge.textContent = "\u2713 Wys\u0142ano"; }
     else { badge.className += " rb-ready"; badge.textContent = "#" + (idx + 1); }
     header.appendChild(badge);
     card.appendChild(header);
@@ -1187,7 +1066,7 @@ function renderRecords() {
     // OCR raw_text (transkrypcja z nagrobka)
     if (rec.rawText) {
       var rawBlock = document.createElement("div"); rawBlock.className = "field"; rawBlock.style.marginBottom = "12px";
-      rawBlock.innerHTML = '<label>📝 Transkrypcja OCR z nagrobka</label>';
+      rawBlock.innerHTML = '<label>\ud83d\udcdd Transkrypcja OCR z nagrobka</label>';
       var rawDiv = document.createElement("div"); rawDiv.className = "raw-text"; rawDiv.style.maxHeight = "120px";
       rawDiv.textContent = rec.rawText;
       rawBlock.appendChild(rawDiv);
@@ -1199,19 +1078,19 @@ function renderRecords() {
       var det = document.createElement("details"); det.style.marginBottom = "12px";
       var sum = document.createElement("summary"); sum.style.cssText = "font-size:12px;color:var(--text2);cursor:pointer;margin-bottom:6px";
       var aiLabel = AI_PROVIDER === "openai" ? "OpenAI" : "Gemini";
-      sum.textContent = "🤖 Surowa odpowiedź " + aiLabel; det.appendChild(sum);
+      sum.textContent = "\ud83e\udd16 Surowa odpowied\u017a " + aiLabel; det.appendChild(sum);
       var raw = document.createElement("div"); raw.className = "raw-text"; raw.textContent = rec.ocrRaw; det.appendChild(raw);
       body.appendChild(det);
     } else if (HAS_AI_KEY) {
       var note = document.createElement("div");
       note.style.cssText = "background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:12px;color:var(--warning);text-align:center;margin-bottom:12px";
-      note.textContent = "⚠️ AI nie rozpoznało danych z tego zdjęcia";
+      note.textContent = "\u26a0\ufe0f AI nie rozpozna\u0142o danych z tego zdj\u0119cia";
       body.appendChild(note);
     }
 
     // Fields — imię i nazwisko osobno
     var rowName = document.createElement("div"); rowName.className = "field-row";
-    rowName.innerHTML = '<div class="field"><label>Imię</label><input type="text" id="f-imie-'+rec.id+'" value="'+escHtml(rec.imie)+'" placeholder="np. Jan" oninput="updateRecordField('+rec.id+',\'imie\',this.value)"></div>'
+    rowName.innerHTML = '<div class="field"><label>Imi\u0119</label><input type="text" id="f-imie-'+rec.id+'" value="'+escHtml(rec.imie)+'" placeholder="np. Jan" oninput="updateRecordField('+rec.id+',\'imie\',this.value)"></div>'
       + '<div class="field"><label>Nazwisko</label><input type="text" id="f-nazwisko-'+rec.id+'" value="'+escHtml(rec.nazwisko)+'" placeholder="np. Kowalski" oninput="updateRecordField('+rec.id+',\'nazwisko\',this.value)"></div>';
     body.appendChild(rowName);
 
@@ -1220,14 +1099,14 @@ function renderRecords() {
     body.appendChild(fDaty);
 
     var fFile = document.createElement("div"); fFile.className = "field";
-    fFile.innerHTML = '<label>📁 Nazwa pliku</label><input type="text" value="'+escHtml(rec.fileName)+'" readonly style="opacity:0.7;cursor:default">';
+    fFile.innerHTML = '<label>\ud83d\udcc1 Nazwa pliku</label><input type="text" value="'+escHtml(rec.fileName)+'" readonly style="opacity:0.7;cursor:default">';
     body.appendChild(fFile);
 
-    // Surowe GPS z AI + skonwertowane
+    // Surowe GPS z AI
     if (rec.rawLat || rec.rawLng) {
       var rawGpsBlock = document.createElement("div"); rawGpsBlock.className = "field-row"; rawGpsBlock.style.marginBottom = "4px";
-      rawGpsBlock.innerHTML = '<div class="field"><label>📍 Surowe GPS (lat)</label><input type="text" value="'+escHtml(rec.rawLat)+'" readonly style="opacity:0.7;cursor:default;font-size:12px"></div>'
-        + '<div class="field"><label>📍 Surowe GPS (lng)</label><input type="text" value="'+escHtml(rec.rawLng)+'" readonly style="opacity:0.7;cursor:default;font-size:12px"></div>';
+      rawGpsBlock.innerHTML = '<div class="field"><label>\ud83d\udccd Surowe GPS (lat)</label><input type="text" value="'+escHtml(rec.rawLat)+'" readonly style="opacity:0.7;cursor:default;font-size:12px"></div>'
+        + '<div class="field"><label>\ud83d\udccd Surowe GPS (lng)</label><input type="text" value="'+escHtml(rec.rawLng)+'" readonly style="opacity:0.7;cursor:default;font-size:12px"></div>';
       body.appendChild(rawGpsBlock);
     }
 
@@ -1243,8 +1122,8 @@ function renderRecords() {
     // Buttons row
     var btnRow = document.createElement("div");
     btnRow.style.cssText = "display:flex;gap:8px;margin-top:14px";
-    btnRow.innerHTML = '<button class="btn btn-success btn-sm" style="flex:1" onclick="sendSingle('+rec.id+')" id="btn-send-'+rec.id+'">📤 Wyślij</button>'
-      + '<button class="btn btn-outline btn-sm" style="width:auto" onclick="removeRecord('+rec.id+')">🗑️</button>';
+    btnRow.innerHTML = '<button class="btn btn-success btn-sm" style="flex:1" onclick="sendSingle('+rec.id+')" id="btn-send-'+rec.id+'">\ud83d\udce4 Wy\u015blij</button>'
+      + '<button class="btn btn-outline btn-sm" style="width:auto" onclick="removeRecord('+rec.id+')">\ud83d\uddd1\ufe0f</button>';
     body.appendChild(btnRow);
 
     card.appendChild(body);
@@ -1260,15 +1139,13 @@ function updateRecordField(id, field, value) {
   var rec = records.find(function(r) { return r.id === id; });
   if (!rec) return;
   rec[field] = value;
-  // Sync nazwa from imie + nazwisko
   if (field === "imie" || field === "nazwisko") {
     rec.nazwa = ((rec.imie || "") + " " + (rec.nazwisko || "")).trim();
   }
-  // Update header preview
   var nameEl = document.getElementById("rh-name-" + id);
   var subEl = document.getElementById("rh-sub-" + id);
   if (nameEl) nameEl.textContent = rec.nazwa || "Bez nazwy";
-  if (subEl) subEl.textContent = (rec.daty || "brak dat") + "  •  " + (rec.fileName || "");
+  if (subEl) subEl.textContent = (rec.daty || "brak dat") + "  \u2022  " + (rec.fileName || "");
 }
 
 function removeRecord(id) {
@@ -1285,8 +1162,8 @@ function updateCounters() {
   document.getElementById("totalCounter").textContent = records.length;
   var btn = document.getElementById("btnSendAll");
   var remaining = records.length - sent;
-  if (remaining === 0) { btn.disabled = true; btn.textContent = "✅ Wszystkie wysłane!"; }
-  else { btn.disabled = false; btn.textContent = "📤 WYŚLIJ WSZYSTKIE DO BAZY (" + remaining + ")"; }
+  if (remaining === 0) { btn.disabled = true; btn.textContent = "\u2705 Wszystkie wys\u0142ane!"; }
+  else { btn.disabled = false; btn.textContent = "\ud83d\udce4 WY\u015aLIJ WSZYSTKIE DO BAZY (" + remaining + ")"; }
 }
 
 // ╔══════════════════════════════════════════════════════════════════╗
@@ -1299,23 +1176,21 @@ async function sendRecord(rec) {
   var lng = rec.lng.trim() ? parseFloat(rec.lng) : null;
   var info = rec.info.trim();
 
-  if (!nazwa) throw new Error("Wpisz imię i nazwisko");
+  if (!nazwa) throw new Error("Wpisz imi\u0119 i nazwisko");
 
   var name = nazwa + (daty ? " (" + daty + ")" : "");
 
   if (CLOUDFLARE_WORKER_URL) {
-    // ── Przez Cloudflare Worker (haszowanie IP po stronie Workera) ──
     var res = await fetch(CLOUDFLARE_WORKER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: name, lat: lat || 0, lng: lng || 0 }),
     });
     var data;
-    try { data = await res.json(); } catch(ex) { throw new Error("Błąd odpowiedzi Workera: " + res.status); }
-    if (!res.ok || data.error) throw new Error(data.error || "Błąd Workera: " + res.status);
+    try { data = await res.json(); } catch(ex) { throw new Error("B\u0142\u0105d odpowiedzi Workera: " + res.status); }
+    if (!res.ok || data.error) throw new Error(data.error || "B\u0142\u0105d Workera: " + res.status);
     return data;
   } else {
-    // ── Bezpośrednio do Google Sheets (bez haszowania IP) ──
     var customId = crypto.randomUUID();
     var res = await fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
@@ -1331,10 +1206,9 @@ async function sendRecord(rec) {
         ip: info || "",
       }),
     });
-    // Google Apps Script redirects — res might be opaque
     var data;
     try { data = await res.json(); } catch(ex) { data = { status: "success" }; }
-    if (data.status === "error") throw new Error(data.message || "Błąd Google Sheets");
+    if (data.status === "error") throw new Error(data.message || "B\u0142\u0105d Google Sheets");
     return data;
   }
 }
@@ -1343,24 +1217,24 @@ async function sendSingle(id) {
   var rec = records.find(function(r) { return r.id === id; });
   if (!rec || rec.sendStatus === "sent") return;
   var btn = document.getElementById("btn-send-" + id);
-  btn.disabled = true; btn.textContent = "⏳ Wysyłam...";
+  btn.disabled = true; btn.textContent = "\u23f3 Wysy\u0142am...";
   try {
     await sendRecord(rec);
     rec.sendStatus = "sent";
     var card = document.getElementById("rec-" + id);
     card.classList.add("sent");
     var badge = document.getElementById("badge-" + id);
-    badge.className = "record-badge rb-sent"; badge.textContent = "✓ Wysłano";
+    badge.className = "record-badge rb-sent"; badge.textContent = "\u2713 Wys\u0142ano";
     var body = document.getElementById("body-" + id);
     body.classList.remove("open");
-    btn.textContent = "✅ Wysłano";
+    btn.textContent = "\u2705 Wys\u0142ano";
     updateCounters();
-    showToast("✅ Wysłano: " + (rec.nazwa || rec.fileName), "success");
+    showToast("\u2705 Wys\u0142ano: " + (rec.nazwa || rec.fileName), "success");
   } catch(err) {
-    btn.disabled = false; btn.textContent = "📤 Wyślij";
+    btn.disabled = false; btn.textContent = "\ud83d\udce4 Wy\u015blij";
     var badge = document.getElementById("badge-" + id);
-    badge.className = "record-badge rb-error"; badge.textContent = "Błąd";
-    showToast("❌ " + (err.message || "Spróbuj ponownie"), "error");
+    badge.className = "record-badge rb-error"; badge.textContent = "B\u0142\u0105d";
+    showToast("\u274c " + (err.message || "Spr\u00f3buj ponownie"), "error");
   }
 }
 
@@ -1372,29 +1246,29 @@ async function sendAll() {
   var ok = 0, fail = 0;
   for (var i = 0; i < toSend.length; i++) {
     var rec = toSend[i];
-    btnAll.textContent = "⏳ Wysyłam " + (i+1) + "/" + toSend.length + "...";
+    btnAll.textContent = "\u23f3 Wysy\u0142am " + (i+1) + "/" + toSend.length + "...";
     var btn = document.getElementById("btn-send-" + rec.id);
-    if (btn) { btn.disabled = true; btn.textContent = "⏳..."; }
+    if (btn) { btn.disabled = true; btn.textContent = "\u23f3..."; }
     try {
       await sendRecord(rec);
       rec.sendStatus = "sent"; ok++;
       var card = document.getElementById("rec-" + rec.id);
       if (card) card.classList.add("sent");
       var badge = document.getElementById("badge-" + rec.id);
-      if (badge) { badge.className = "record-badge rb-sent"; badge.textContent = "✓ Wysłano"; }
+      if (badge) { badge.className = "record-badge rb-sent"; badge.textContent = "\u2713 Wys\u0142ano"; }
       var body = document.getElementById("body-" + rec.id);
       if (body) body.classList.remove("open");
-      if (btn) btn.textContent = "✅ Wysłano";
+      if (btn) btn.textContent = "\u2705 Wys\u0142ano";
     } catch(err) {
       fail++;
-      if (btn) { btn.disabled = false; btn.textContent = "📤 Wyślij"; }
+      if (btn) { btn.disabled = false; btn.textContent = "\ud83d\udce4 Wy\u015blij"; }
       var badge = document.getElementById("badge-" + rec.id);
-      if (badge) { badge.className = "record-badge rb-error"; badge.textContent = "Błąd"; }
+      if (badge) { badge.className = "record-badge rb-error"; badge.textContent = "B\u0142\u0105d"; }
     }
     updateCounters();
   }
-  if (fail === 0) showToast("✅ Wysłano " + ok + " rekordów!", "success");
-  else showToast("⚠️ " + ok + " wysłanych, " + fail + " błędów", fail > 0 ? "error" : "success");
+  if (fail === 0) showToast("\u2705 Wys\u0142ano " + ok + " rekord\u00f3w!", "success");
+  else showToast("\u26a0\ufe0f " + ok + " wys\u0142anych, " + fail + " b\u0142\u0119d\u00f3w", fail > 0 ? "error" : "success");
   updateCounters();
 }
 </script>
