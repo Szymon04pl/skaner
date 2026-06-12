@@ -654,7 +654,7 @@ function resetSteps() {
     document.getElementById(id + "Icon").textContent = String(i + 1);
   });
   document.getElementById("stepGpsText").textContent = "Odczytuję GPS z EXIF...";
-  document.getElementById("stepOcrText").textContent = "🤖 Analiza AI (Gemini)...";
+  document.getElementById("stepOcrText").textContent = "🤖 Analiza AI...";
   document.getElementById("stepReadyText").textContent = "Gotowe do zapisu";
 }
 
@@ -701,16 +701,65 @@ function readExifGps(file) {
 }
 
 // ╔══════════════════════════════════════════════════════════════════╗
-// ║  GEMINI AI — analiza zdjęcia (tekst + GPS)                        ║
+// ║  KONWERTER DMS → DECIMAL (dla surowych stringów z AI)             ║
 // ╚══════════════════════════════════════════════════════════════════╝
-var GEMINI_PROMPT = 'Jesteś profesjonalnym asystentem inwentaryzacji cmentarzy. Spójrz na zdjęcie nagrobka i:\n\n1. Wyodrębnij Imię i Nazwisko (pomiń modlitwy, cytaty, ŚP, Ave Maria, R.I.P., \"Tu spoczywa\" itp.). Jeśli jest kilka osób, weź pierwszą.\n2. Wyodrębnij datę urodzenia i zgonu (zwróć tylko lata, np. \"1920-1985\"). Jeśli pełne daty — też zamień na lata.\n3. Odczytaj współrzędne GPS ze stempla/napisu na zdjęciu (np. 52°12\'56\" N, 21°3\'55\" E albo 42°21\'53\", 31°6\'1\") i przelicz je na format dziesiętny (np. 52.2155). Jeśli brak liter kierunku (N/S/E/W), załóż N dla pierwszej i E dla drugiej.\n4. Jeśli nie widzisz współrzędnych GPS na zdjęciu, zwróć puste stringi dla lat i lng.\n\nZwróć wynik WYŁĄCZNIE jako czysty JSON (bez markdown, bez ```json):\n{"nazwa": "Imię Nazwisko", "daty": "RRRR-RRRR", "lat": "52.2155", "lng": "21.0653"}';
+function convertDMSToDecimal(dmsString) {
+  if (!dmsString || typeof dmsString !== "string") return null;
+  var s = dmsString.trim();
+  // Normalizuj znaki
+  s = s.replace(/[˚º⁰]/g, "°").replace(/[′`‛']/g, "'").replace(/[″‟˝"]/g, '"').replace(/''/g, '"');
+  // Regex: 52°51'53" N  lub  N 52°51'53"  lub  52 51 53 N  lub  52°51'53"
+  var re = /([NSEW])?\s*(\d{1,3})\s*[°\s]\s*(\d{1,2})\s*['\s]\s*(\d{1,2}(?:[.,]\d+)?)\s*"?\s*([NSEW])?/i;
+  var m = re.exec(s);
+  if (!m) {
+    // Spróbuj format dziesiętny: "52.8647 N" lub "52.8647"
+    var decRe = /([NSEW])?\s*(\d{1,3}[.,]\d+)\s*°?\s*([NSEW])?/i;
+    var dm = decRe.exec(s);
+    if (dm) {
+      var val = parseFloat(dm[2].replace(",", "."));
+      var dir = (dm[1] || dm[3] || "").toUpperCase();
+      if (dir === "S" || dir === "W") val = -val;
+      return parseFloat(val.toFixed(6));
+    }
+    return null;
+  }
+  var dir = (m[1] || m[5] || "").toUpperCase();
+  var deg = parseFloat(m[2]) || 0;
+  var min = parseFloat(m[3]) || 0;
+  var sec = parseFloat((m[4] || "0").replace(",", ".")) || 0;
+  var dec = deg + (min / 60) + (sec / 3600);
+  if (dir === "S" || dir === "W") dec = -dec;
+  return parseFloat(dec.toFixed(6));
+}
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  AI — analiza zdjęcia (tekst + GPS)                               ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+var AI_PROMPT = 'Odczytaj tekst z nagrobka oraz tekst stempla GPS z rogu zdjęcia. Nie wykonuj żadnych obliczeń matematycznych. Zwróć surowe ciągi znaków. Jeśli widzisz współrzędne, zwróć je dokładnie w takim formacie, w jakim są napisane (np. 52°51\'53\" N). W polu raw_text umieść całą transkrypcję tekstu z nagrobka (wiersz po wierszu, oddzielone \\n). W polu imie wpisz TYLKO imię (bez nazwiska, bez ŚP). W polu nazwisko wpisz TYLKO nazwisko. W polu daty wpisz daty (np. 1920-1985). Jeśli brakuje informacji, zostaw pole jako pusty string. ODPOWIEDZ WYŁĄCZNIE czystym JSON bez markdown:\\n{\"raw_lat\": \"\", \"raw_lng\": \"\", \"raw_text\": \"\", \"imie\": \"\", \"nazwisko\": \"\", \"daty\": \"\"}';
+// Stary prompt usunięty. var _OLD_PROMPT_REMOVED = 'Jesteś profesjonalnym asystentem inwentaryzacji cmentarzy. Spójrz na zdjęcie nagrobka i:\n\n1. Wyodrębnij Imię i Nazwisko (pomiń modlitwy, cytaty, ŚP, Ave Maria, R.I.P., \"Tu spoczywa\" itp.). Jeśli jest kilka osób, weź pierwszą.\n2. Wyodrębnij datę urodzenia i zgonu (zwróć tylko lata, np. \"1920-1985\"). Jeśli pełne daty — też zamień na lata.\n3. Odczytaj współrzędne GPS ze stempla/napisu na zdjęciu (np. 52°12\'56\" N, 21°3\'55\" E albo 42°21\'53\", 31°6\'1\") i przelicz je na format dziesiętny (np. 52.2155). Jeśli brak liter kierunku (N/S/E/W), załóż N dla pierwszej i E dla drugiej.\n4. Jeśli nie widzisz współrzędnych GPS na zdjęciu, zwróć puste stringi dla lat i lng.\n\nZwróć wynik WYŁĄCZNIE jako czysty JSON (bez markdown, bez ```json):\n{"nazwa": "Imię Nazwisko", "daty": "RRRR-RRRR", "lat": "52.2155", "lng": "21.0653"}';
 
 async function analyzeWithAI(dataUrl) {
+  var result;
   if (AI_PROVIDER === "openai") {
-    return await analyzeWithOpenAI(dataUrl);
+    result = await analyzeWithOpenAI(dataUrl);
   } else {
-    return await analyzeWithGemini(dataUrl);
+    result = await analyzeWithGemini(dataUrl);
   }
+  // Konwertuj surowe DMS do decimal po stronie JS
+  if (result.raw_lat && !result.lat) {
+    var decLat = convertDMSToDecimal(result.raw_lat);
+    if (decLat !== null) result.lat = String(decLat);
+  }
+  if (result.raw_lng && !result.lng) {
+    var decLng = convertDMSToDecimal(result.raw_lng);
+    if (decLng !== null) result.lng = String(decLng);
+  }
+  // Złóż nazwa z imie + nazwisko jeśli brak
+  if (!result.nazwa && (result.imie || result.nazwisko)) {
+    result.nazwa = ((result.imie || "") + " " + (result.nazwisko || "")).trim();
+  }
+  return result;
 }
 
 // ── OpenAI GPT-4o-mini ──────────────────────────────────────────
@@ -726,7 +775,7 @@ async function analyzeWithOpenAI(dataUrl) {
       messages: [
         { role: "system", content: "Odpowiadaj WYŁĄCZNIE czystym JSON, bez markdown, bez ```." },
         { role: "user", content: [
-          { type: "text", text: GEMINI_PROMPT },
+          { type: "text", text: AI_PROMPT },
           { type: "image_url", image_url: { url: dataUrl, detail: "low" } }
         ]}
       ],
@@ -776,7 +825,7 @@ async function analyzeWithGemini(dataUrl) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [
-        { text: GEMINI_PROMPT },
+        { text: AI_PROMPT },
         { inline_data: { mime_type: mimeType, data: base64 } }
       ]}],
       generationConfig: { temperature: 0.1, maxOutputTokens: 512 },
@@ -836,8 +885,13 @@ function parseAIResponse(text) {
     }
   }
   return {
+    imie: parsed.imie || "",
+    nazwisko: parsed.nazwisko || "",
     nazwa: parsed.nazwa || parsed.imie_nazwisko || parsed.name || "",
     daty: parsed.daty || parsed["rok_urodzenia-zgonu"] || parsed.dates || "",
+    raw_lat: parsed.raw_lat || "",
+    raw_lng: parsed.raw_lng || "",
+    raw_text: parsed.raw_text || "",
     lat: parsed.lat || "",
     lng: parsed.lng || "",
     rawResponse: text
@@ -1013,8 +1067,9 @@ async function startProcessing() {
       var gps = gpsPerPhoto[i];
       records.push({
         id: ++nextId, photoId: photos[i].id, dataUrl: photos[i].dataUrl,
-        nazwa: "", daty: "", fileName: photos[i].file.name,
+        imie: "", nazwisko: "", nazwa: "", daty: "", fileName: photos[i].file.name,
         lat: gps ? String(gps.lat) : "", lng: gps ? String(gps.lng) : "",
+        rawLat: "", rawLng: "", rawText: "",
         info: "", ocrRaw: "", sendStatus: "ready"
       });
     }
@@ -1043,25 +1098,30 @@ async function startProcessing() {
       renderGrid();
 
       var gps = gpsPerPhoto[j];
-      var nazwa = "", daty = "", aiLat = "", aiLng = "", rawResp = "";
+      var nazwa = "", imie = "", nazwisko = "", daty = "", aiLat = "", aiLng = "", rawResp = "", rawText = "", rawLatStr = "", rawLngStr = "";
 
       if (aiResult) {
-        nazwa = aiResult.nazwa || "";
+        imie = aiResult.imie || "";
+        nazwisko = aiResult.nazwisko || "";
+        nazwa = aiResult.nazwa || ((imie + " " + nazwisko).trim());
         daty = aiResult.daty || "";
         aiLat = aiResult.lat ? String(aiResult.lat) : "";
         aiLng = aiResult.lng ? String(aiResult.lng) : "";
         rawResp = aiResult.rawResponse || "";
+        rawText = aiResult.raw_text || "";
+        rawLatStr = aiResult.raw_lat || "";
+        rawLngStr = aiResult.raw_lng || "";
       }
 
-      // GPS: priorytet EXIF > Gemini AI
+      // GPS: priorytet EXIF > AI (skonwertowane DMS)
       var finalLat = gps ? String(gps.lat) : aiLat;
       var finalLng = gps ? String(gps.lng) : aiLng;
 
       records.push({
         id: ++nextId, photoId: photos[j].id, dataUrl: photos[j].dataUrl,
-        nazwa: nazwa, daty: daty, fileName: photos[j].file.name,
-        lat: finalLat, lng: finalLng,
-        info: "", ocrRaw: rawResp, sendStatus: "ready"
+        imie: imie, nazwisko: nazwisko, nazwa: nazwa, daty: daty, fileName: photos[j].file.name,
+        lat: finalLat, lng: finalLng, rawLat: rawLatStr, rawLng: rawLngStr,
+        info: "", ocrRaw: rawResp, rawText: rawText, sendStatus: "ready"
       });
     }
     var aiLabel = AI_PROVIDER === "openai" ? "GPT-4o-mini" : "Gemini";
@@ -1106,7 +1166,7 @@ function renderRecords() {
     var info = document.createElement("div"); info.className = "record-header-info";
     var nameEl = document.createElement("div"); nameEl.className = "rh-name";
     nameEl.id = "rh-name-" + rec.id;
-    nameEl.textContent = rec.nazwa || "Zdjęcie #" + (idx + 1);
+    nameEl.textContent = rec.nazwa || ((rec.imie || "") + " " + (rec.nazwisko || "")).trim() || "Zdjęcie #" + (idx + 1);
     info.appendChild(nameEl);
     var sub = document.createElement("div"); sub.className = "rh-sub";
     sub.id = "rh-sub-" + rec.id;
@@ -1124,24 +1184,36 @@ function renderRecords() {
     var body = document.createElement("div"); body.className = "record-body" + (rec.sendStatus !== "sent" ? " open" : "");
     body.id = "body-" + rec.id;
 
-    // OCR raw
+    // OCR raw_text (transkrypcja z nagrobka)
+    if (rec.rawText) {
+      var rawBlock = document.createElement("div"); rawBlock.className = "field"; rawBlock.style.marginBottom = "12px";
+      rawBlock.innerHTML = '<label>📝 Transkrypcja OCR z nagrobka</label>';
+      var rawDiv = document.createElement("div"); rawDiv.className = "raw-text"; rawDiv.style.maxHeight = "120px";
+      rawDiv.textContent = rec.rawText;
+      rawBlock.appendChild(rawDiv);
+      body.appendChild(rawBlock);
+    }
+
+    // Surowa odpowiedź AI (JSON)
     if (rec.ocrRaw) {
       var det = document.createElement("details"); det.style.marginBottom = "12px";
       var sum = document.createElement("summary"); sum.style.cssText = "font-size:12px;color:var(--text2);cursor:pointer;margin-bottom:6px";
-      sum.textContent = "🤖 Odpowiedź Gemini AI"; det.appendChild(sum);
+      var aiLabel = AI_PROVIDER === "openai" ? "OpenAI" : "Gemini";
+      sum.textContent = "🤖 Surowa odpowiedź " + aiLabel; det.appendChild(sum);
       var raw = document.createElement("div"); raw.className = "raw-text"; raw.textContent = rec.ocrRaw; det.appendChild(raw);
       body.appendChild(det);
     } else if (HAS_AI_KEY) {
       var note = document.createElement("div");
       note.style.cssText = "background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:12px;color:var(--warning);text-align:center;margin-bottom:12px";
-      note.textContent = "⚠️ Gemini nie rozpoznał danych z tego zdjęcia";
+      note.textContent = "⚠️ AI nie rozpoznało danych z tego zdjęcia";
       body.appendChild(note);
     }
 
-    // Fields
-    var fNazwa = document.createElement("div"); fNazwa.className = "field";
-    fNazwa.innerHTML = '<label>Imię i nazwisko</label><input type="text" id="f-nazwa-'+rec.id+'" value="'+escHtml(rec.nazwa)+'" placeholder="np. Jan Kowalski" oninput="updateRecordField('+rec.id+',\'nazwa\',this.value)">';
-    body.appendChild(fNazwa);
+    // Fields — imię i nazwisko osobno
+    var rowName = document.createElement("div"); rowName.className = "field-row";
+    rowName.innerHTML = '<div class="field"><label>Imię</label><input type="text" id="f-imie-'+rec.id+'" value="'+escHtml(rec.imie)+'" placeholder="np. Jan" oninput="updateRecordField('+rec.id+',\'imie\',this.value)"></div>'
+      + '<div class="field"><label>Nazwisko</label><input type="text" id="f-nazwisko-'+rec.id+'" value="'+escHtml(rec.nazwisko)+'" placeholder="np. Kowalski" oninput="updateRecordField('+rec.id+',\'nazwisko\',this.value)"></div>';
+    body.appendChild(rowName);
 
     var fDaty = document.createElement("div"); fDaty.className = "field";
     fDaty.innerHTML = '<label>Daty</label><input type="text" id="f-daty-'+rec.id+'" value="'+escHtml(rec.daty)+'" placeholder="np. 1920-1985" oninput="updateRecordField('+rec.id+',\'daty\',this.value)">';
@@ -1151,9 +1223,17 @@ function renderRecords() {
     fFile.innerHTML = '<label>📁 Nazwa pliku</label><input type="text" value="'+escHtml(rec.fileName)+'" readonly style="opacity:0.7;cursor:default">';
     body.appendChild(fFile);
 
+    // Surowe GPS z AI + skonwertowane
+    if (rec.rawLat || rec.rawLng) {
+      var rawGpsBlock = document.createElement("div"); rawGpsBlock.className = "field-row"; rawGpsBlock.style.marginBottom = "4px";
+      rawGpsBlock.innerHTML = '<div class="field"><label>📍 Surowe GPS (lat)</label><input type="text" value="'+escHtml(rec.rawLat)+'" readonly style="opacity:0.7;cursor:default;font-size:12px"></div>'
+        + '<div class="field"><label>📍 Surowe GPS (lng)</label><input type="text" value="'+escHtml(rec.rawLng)+'" readonly style="opacity:0.7;cursor:default;font-size:12px"></div>';
+      body.appendChild(rawGpsBlock);
+    }
+
     var row2 = document.createElement("div"); row2.className = "field-row";
-    row2.innerHTML = '<div class="field"><label>Latitude</label><input type="text" id="f-lat-'+rec.id+'" value="'+escHtml(rec.lat)+'" placeholder="51.7592" oninput="updateRecordField('+rec.id+',\'lat\',this.value)"></div>'
-      + '<div class="field"><label>Longitude</label><input type="text" id="f-lng-'+rec.id+'" value="'+escHtml(rec.lng)+'" placeholder="19.4560" oninput="updateRecordField('+rec.id+',\'lng\',this.value)"></div>';
+    row2.innerHTML = '<div class="field"><label>Latitude (decimal)</label><input type="text" id="f-lat-'+rec.id+'" value="'+escHtml(rec.lat)+'" placeholder="51.7592" oninput="updateRecordField('+rec.id+',\'lat\',this.value)"></div>'
+      + '<div class="field"><label>Longitude (decimal)</label><input type="text" id="f-lng-'+rec.id+'" value="'+escHtml(rec.lng)+'" placeholder="19.4560" oninput="updateRecordField('+rec.id+',\'lng\',this.value)"></div>';
     body.appendChild(row2);
 
     var fInfo = document.createElement("div"); fInfo.className = "field";
@@ -1180,6 +1260,10 @@ function updateRecordField(id, field, value) {
   var rec = records.find(function(r) { return r.id === id; });
   if (!rec) return;
   rec[field] = value;
+  // Sync nazwa from imie + nazwisko
+  if (field === "imie" || field === "nazwisko") {
+    rec.nazwa = ((rec.imie || "") + " " + (rec.nazwisko || "")).trim();
+  }
   // Update header preview
   var nameEl = document.getElementById("rh-name-" + id);
   var subEl = document.getElementById("rh-sub-" + id);
@@ -1209,8 +1293,8 @@ function updateCounters() {
 // ║  WYSYŁANIE — obsługa Cloudflare Worker + fallback Sheets          ║
 // ╚══════════════════════════════════════════════════════════════════╝
 async function sendRecord(rec) {
-  var nazwa = rec.nazwa.trim();
-  var daty = rec.daty.trim();
+  var nazwa = (rec.nazwa || ((rec.imie || "") + " " + (rec.nazwisko || ""))).trim();
+  var daty = (rec.daty || "").trim();
   var lat = rec.lat.trim() ? parseFloat(rec.lat) : null;
   var lng = rec.lng.trim() ? parseFloat(rec.lng) : null;
   var info = rec.info.trim();
