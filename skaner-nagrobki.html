@@ -709,6 +709,9 @@ function renderGrid() {
     var img = document.createElement("img"); img.src = p.dataUrl; img.alt = "Zdj\u0119cie " + (idx + 1); wrapper.appendChild(img);
     var badge = document.createElement("div"); badge.className = "p-badge"; badge.textContent = "#" + (idx + 1); wrapper.appendChild(badge);
     var del = document.createElement("button"); del.className = "p-del"; del.textContent = "\u2715"; del.onclick = function() { removePhoto(p.id); }; wrapper.appendChild(del);
+    var dl = document.createElement("button"); dl.className = "p-del"; dl.style.cssText = "top:4px;right:34px;background:rgba(59,130,246,0.9);font-size:13px"; dl.textContent = "⬇"; dl.title = "Pobierz zdjęcie";
+    dl.onclick = (function(photo) { return function(e) { e.stopPropagation(); downloadDataUrl(photo.dataUrl, photo.file.name || "photo.jpg"); }; })(p);
+    wrapper.appendChild(dl);
     if (p.status === "processing") { var st = document.createElement("div"); st.className = "p-status s-proc"; st.textContent = "OCR..."; wrapper.appendChild(st); }
     else if (p.status === "done") { var st2 = document.createElement("div"); st2.className = "p-status s-done"; st2.textContent = "\u2713 OK"; wrapper.appendChild(st2); }
     else if (p.status === "error") { var st3 = document.createElement("div"); st3.className = "p-status s-err"; st3.textContent = "\u2717"; wrapper.appendChild(st3); }
@@ -1590,6 +1593,9 @@ function capturePhoto() {
   var fileName = "GPS_" + dateStr.replace(/[: ]/g, "-") + ".jpg";
   var file = new File([blob], fileName, { type: "image/jpeg" });
 
+  // Auto-download to phone storage
+  downloadDataUrl(jpegDataUrl, fileName);
+
   // Add to photos array as if user picked a file
   var id = ++nextId;
   photos.push({
@@ -1600,7 +1606,16 @@ function capturePhoto() {
     browserGps: camCurrentPos ? { lat: camCurrentPos.lat, lng: camCurrentPos.lng } : null
   });
   renderGrid();
-  showToast("📸 Zdjęcie z GPS zapisane!", "success");
+  showToast("📸 Zdjęcie zapisane do pobranych! (" + fileName + ")", "success");
+}
+
+function downloadDataUrl(dataUrl, fileName) {
+  var a = document.createElement("a");
+  a.href = dataUrl;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 // Convert decimal degrees to DMS for EXIF [[deg,1],[min,1],[sec*10000,10000]]
