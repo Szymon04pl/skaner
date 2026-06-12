@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>📸 Skaner Nagrobków</title>
 <script src="https://unpkg.com/exif-js@2.3.0/exif.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -204,6 +205,66 @@
     padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
     background: var(--surface2); border: 1px solid var(--border);
   }
+
+  /* ── CAMERA OVERLAY ─────────────────────────────────── */
+  .camera-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: #000; z-index: 10000;
+    display: flex; flex-direction: column;
+  }
+  .camera-overlay.hidden { display: none !important; }
+  .camera-video-wrap {
+    flex: 1; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .camera-video-wrap video {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .camera-gps-overlay {
+    position: absolute; bottom: 80px; right: 12px;
+    background: rgba(0,0,0,0.75); color: #fff;
+    padding: 8px 14px; border-radius: 10px;
+    font-family: 'Inter', monospace; font-size: 13px; font-weight: 600;
+    line-height: 1.6; pointer-events: none; text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    max-width: 260px;
+  }
+  .camera-gps-overlay .gps-searching {
+    color: #f59e0b; font-size: 12px;
+  }
+  .camera-controls {
+    height: 120px; background: rgba(0,0,0,0.85);
+    display: flex; align-items: center; justify-content: center; gap: 40px;
+    padding: 0 24px; flex-shrink: 0;
+  }
+  .shutter-btn {
+    width: 76px; height: 76px; border-radius: 50%;
+    background: #fff; border: 5px solid rgba(255,255,255,0.4);
+    cursor: pointer; transition: transform 0.1s, background 0.1s;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .shutter-btn:active { transform: scale(0.88); background: #ccc; }
+  .cam-btn {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+    color: #fff; font-size: 22px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s;
+  }
+  .cam-btn:active { background: rgba(255,255,255,0.3); }
+  .camera-top-bar {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(rgba(0,0,0,0.6), transparent);
+    z-index: 2;
+  }
+  .camera-flash {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: #fff; z-index: 10001; pointer-events: none;
+    opacity: 0; transition: opacity 0.05s;
+  }
+  .camera-flash.flash { opacity: 0.7; }
 </style>
 </head>
 <body>
@@ -327,6 +388,14 @@
       <span>📷 Zdjęcia nagrobków</span>
       <span id="countLabel" style="font-size:12px;color:var(--accent);text-transform:none;letter-spacing:0"></span>
     </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-primary" onclick="openCamera()" style="flex:1;padding:14px;font-size:15px">
+        📸 Otwórz aparat GPS
+      </button>
+      <button class="btn btn-outline" onclick="fileInput.click()" style="width:auto;padding:14px 18px;font-size:15px">
+        📁
+      </button>
+    </div>
     <div class="drop-zone" id="dropZone" onclick="fileInput.click()">
       <div class="dz-icon">📷</div>
       <p>Dotknij aby wybrać zdjęcia<br>lub przeciągnij je tutaj</p>
@@ -378,6 +447,28 @@
   </div>
 
 </div>
+
+<!-- ── CAMERA OVERLAY ──────────────────────────────────── -->
+<div class="camera-overlay hidden" id="cameraOverlay">
+  <div class="camera-top-bar">
+    <button class="cam-btn" onclick="closeCamera()" style="font-size:18px">✕</button>
+    <div style="color:#fff;font-size:13px;font-weight:600" id="camGpsAccuracy">⏳ GPS...</div>
+    <button class="cam-btn" onclick="switchCamera()" id="btnSwitchCam" title="Przełącz kamerę">🔄</button>
+  </div>
+  <div class="camera-video-wrap">
+    <video id="camVideo" autoplay playsinline muted></video>
+    <div class="camera-gps-overlay" id="camGpsOverlay">
+      <div class="gps-searching">⏳ Szukam sygnału GPS...</div>
+    </div>
+  </div>
+  <div class="camera-controls">
+    <div style="width:48px"></div>
+    <button class="shutter-btn" id="shutterBtn" onclick="capturePhoto()"></button>
+    <div style="width:48px"></div>
+  </div>
+</div>
+<div class="camera-flash" id="cameraFlash"></div>
+<canvas id="captureCanvas" style="display:none"></canvas>
 
 <div class="toast" id="toast"></div>
 
@@ -1271,6 +1362,279 @@ async function sendAll() {
   else showToast("\u26a0\ufe0f " + ok + " wys\u0142anych, " + fail + " b\u0142\u0119d\u00f3w", fail > 0 ? "error" : "success");
   updateCounters();
 }
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  KAMERA GPS — Live Preview + Geo-Stempel + EXIF                   ║
+// ╚══════════════════════════════════════════════════════════════════╝
+var camStream = null;
+var camFacingMode = "environment";
+var camGpsWatchId = null;
+var camCurrentPos = null; // { lat, lng, accuracy }
+
+function openCamera() {
+  document.getElementById("cameraOverlay").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+  startCameraStream();
+  startGpsWatch();
+}
+
+function closeCamera() {
+  document.getElementById("cameraOverlay").classList.add("hidden");
+  document.body.style.overflow = "";
+  stopCameraStream();
+  stopGpsWatch();
+}
+
+function startCameraStream() {
+  stopCameraStream();
+  var constraints = {
+    video: {
+      facingMode: camFacingMode,
+      width: { ideal: 3840 },
+      height: { ideal: 2160 }
+    },
+    audio: false
+  };
+  navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
+    camStream = stream;
+    var video = document.getElementById("camVideo");
+    video.srcObject = stream;
+    video.play();
+  }).catch(function(err) {
+    console.error("Camera error:", err);
+    showToast("❌ Brak dostępu do kamery: " + err.message, "error");
+    closeCamera();
+  });
+}
+
+function stopCameraStream() {
+  if (camStream) {
+    camStream.getTracks().forEach(function(t) { t.stop(); });
+    camStream = null;
+  }
+  var video = document.getElementById("camVideo");
+  if (video) video.srcObject = null;
+}
+
+function switchCamera() {
+  camFacingMode = camFacingMode === "environment" ? "user" : "environment";
+  startCameraStream();
+}
+
+function startGpsWatch() {
+  stopGpsWatch();
+  camCurrentPos = null;
+  updateGpsOverlay();
+  if (!navigator.geolocation) {
+    document.getElementById("camGpsOverlay").innerHTML = '<div style="color:#ef4444">❌ GPS niedostępny</div>';
+    return;
+  }
+  camGpsWatchId = navigator.geolocation.watchPosition(
+    function(pos) {
+      camCurrentPos = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: pos.coords.accuracy
+      };
+      updateGpsOverlay();
+    },
+    function(err) {
+      console.error("GPS error:", err);
+      document.getElementById("camGpsOverlay").innerHTML = '<div style="color:#ef4444">❌ GPS: ' + err.message + '</div>';
+    },
+    { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+  );
+}
+
+function stopGpsWatch() {
+  if (camGpsWatchId !== null) {
+    navigator.geolocation.clearWatch(camGpsWatchId);
+    camGpsWatchId = null;
+  }
+}
+
+function updateGpsOverlay() {
+  var el = document.getElementById("camGpsOverlay");
+  var accEl = document.getElementById("camGpsAccuracy");
+  if (!camCurrentPos) {
+    el.innerHTML = '<div class="gps-searching">⏳ Szukam sygnału GPS...</div>';
+    if (accEl) accEl.textContent = "⏳ GPS...";
+    return;
+  }
+  var p = camCurrentPos;
+  el.innerHTML =
+    '<div style="font-size:15px;font-weight:700;letter-spacing:0.3px">' + p.lat.toFixed(6) + '</div>' +
+    '<div style="font-size:15px;font-weight:700;letter-spacing:0.3px">' + p.lng.toFixed(6) + '</div>' +
+    '<div style="font-size:11px;color:#aaa;margin-top:2px">± ' + Math.round(p.accuracy) + ' m</div>';
+  if (accEl) {
+    var color = p.accuracy <= 10 ? "#22c55e" : p.accuracy <= 30 ? "#f59e0b" : "#ef4444";
+    accEl.innerHTML = '<span style="color:' + color + '">📡 ± ' + Math.round(p.accuracy) + ' m</span>';
+  }
+}
+
+function capturePhoto() {
+  var video = document.getElementById("camVideo");
+  if (!video || !video.videoWidth) { showToast("⏳ Kamera nie gotowa", "error"); return; }
+
+  // Flash effect
+  var flash = document.getElementById("cameraFlash");
+  flash.classList.add("flash");
+  setTimeout(function() { flash.classList.remove("flash"); }, 150);
+
+  var canvas = document.getElementById("captureCanvas");
+  var ctx = canvas.getContext("2d");
+  var w = video.videoWidth;
+  var h = video.videoHeight;
+  canvas.width = w;
+  canvas.height = h;
+
+  // Draw video frame
+  ctx.drawImage(video, 0, 0, w, h);
+
+  // Build stamp text
+  var now = new Date();
+  var dateStr = now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2, "0") + "-" +
+    String(now.getDate()).padStart(2, "0") + " " +
+    String(now.getHours()).padStart(2, "0") + ":" +
+    String(now.getMinutes()).padStart(2, "0") + ":" +
+    String(now.getSeconds()).padStart(2, "0");
+
+  var latStr = camCurrentPos ? camCurrentPos.lat.toFixed(6) : "---";
+  var lngStr = camCurrentPos ? camCurrentPos.lng.toFixed(6) : "---";
+  var accStr = camCurrentPos ? ("±" + Math.round(camCurrentPos.accuracy) + "m") : "";
+
+  var line1 = "LAT: " + latStr + "  LNG: " + lngStr;
+  var line2 = dateStr + (accStr ? "  " + accStr : "");
+
+  // Font size proportional to image width (big & readable)
+  var fontSize = Math.max(28, Math.round(w * 0.028));
+  ctx.font = "bold " + fontSize + "px 'Inter', 'Arial', monospace";
+  var padding = Math.round(fontSize * 0.6);
+  var lineSpacing = Math.round(fontSize * 1.4);
+
+  // Measure text
+  var textW1 = ctx.measureText(line1).width;
+  var textW2 = ctx.measureText(line2).width;
+  var maxTextW = Math.max(textW1, textW2);
+  var barW = maxTextW + padding * 2;
+  var barH = lineSpacing * 2 + padding * 1.5;
+
+  // Draw black background bar (bottom-right)
+  var barX = w - barW - padding;
+  var barY = h - barH - padding;
+  ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+  ctx.beginPath();
+  var r = Math.round(fontSize * 0.3);
+  ctx.moveTo(barX + r, barY);
+  ctx.lineTo(barX + barW - r, barY);
+  ctx.quadraticCurveTo(barX + barW, barY, barX + barW, barY + r);
+  ctx.lineTo(barX + barW, barY + barH - r);
+  ctx.quadraticCurveTo(barX + barW, barY + barH, barX + barW - r, barY + barH);
+  ctx.lineTo(barX + r, barY + barH);
+  ctx.quadraticCurveTo(barX, barY + barH, barX, barY + barH - r);
+  ctx.lineTo(barX, barY + r);
+  ctx.quadraticCurveTo(barX, barY, barX + r, barY);
+  ctx.closePath();
+  ctx.fill();
+
+  // Draw white text
+  ctx.fillStyle = "#ffffff";
+  ctx.textBaseline = "top";
+  ctx.font = "bold " + fontSize + "px 'Inter', 'Arial', monospace";
+  ctx.fillText(line1, barX + padding, barY + padding);
+  ctx.fillText(line2, barX + padding, barY + padding + lineSpacing);
+
+  // Convert to JPEG with EXIF
+  var jpegDataUrl;
+  if (camCurrentPos && typeof piexif !== "undefined") {
+    // First get raw JPEG
+    var rawJpeg = canvas.toDataURL("image/jpeg", 0.92);
+    // Build EXIF data
+    var exifObj = { "0th": {}, "Exif": {}, "GPS": {}, "1st": {} };
+
+    var lat = camCurrentPos.lat;
+    var lng = camCurrentPos.lng;
+    exifObj["GPS"][piexif.GPSIFD.GPSLatitudeRef] = lat >= 0 ? "N" : "S";
+    exifObj["GPS"][piexif.GPSIFD.GPSLatitude] = decimalToDMS(Math.abs(lat));
+    exifObj["GPS"][piexif.GPSIFD.GPSLongitudeRef] = lng >= 0 ? "E" : "W";
+    exifObj["GPS"][piexif.GPSIFD.GPSLongitude] = decimalToDMS(Math.abs(lng));
+
+    // Date/time
+    var exifDate = now.getFullYear() + ":" +
+      String(now.getMonth() + 1).padStart(2, "0") + ":" +
+      String(now.getDate()).padStart(2, "0") + " " +
+      String(now.getHours()).padStart(2, "0") + ":" +
+      String(now.getMinutes()).padStart(2, "0") + ":" +
+      String(now.getSeconds()).padStart(2, "0");
+    exifObj["Exif"][piexif.ExifIFD.DateTimeOriginal] = exifDate;
+    exifObj["0th"][piexif.ImageIFD.DateTime] = exifDate;
+
+    try {
+      var exifBytes = piexif.dump(exifObj);
+      jpegDataUrl = piexif.insert(exifBytes, rawJpeg);
+    } catch(e) {
+      console.error("EXIF injection error:", e);
+      jpegDataUrl = rawJpeg;
+    }
+  } else {
+    jpegDataUrl = canvas.toDataURL("image/jpeg", 0.92);
+  }
+
+  // Convert dataUrl to File-like for addFiles flow
+  var byteString = atob(jpegDataUrl.split(",")[1]);
+  var arrayBuffer = new ArrayBuffer(byteString.length);
+  var ia = new Uint8Array(arrayBuffer);
+  for (var i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+  var blob = new Blob([arrayBuffer], { type: "image/jpeg" });
+  var fileName = "GPS_" + dateStr.replace(/[: ]/g, "-") + ".jpg";
+  var file = new File([blob], fileName, { type: "image/jpeg" });
+
+  // Add to photos array as if user picked a file
+  var id = ++nextId;
+  photos.push({
+    id: id,
+    file: file,
+    dataUrl: jpegDataUrl,
+    status: "new",
+    browserGps: camCurrentPos ? { lat: camCurrentPos.lat, lng: camCurrentPos.lng } : null
+  });
+  renderGrid();
+  showToast("📸 Zdjęcie z GPS zapisane!", "success");
+}
+
+// Convert decimal degrees to DMS for EXIF [[deg,1],[min,1],[sec*10000,10000]]
+function decimalToDMS(dd) {
+  var d = Math.floor(dd);
+  var minFloat = (dd - d) * 60;
+  var m = Math.floor(minFloat);
+  var secFloat = (minFloat - m) * 60;
+  var s = Math.round(secFloat * 10000);
+  return [[d, 1], [m, 1], [s, 10000]];
+}
+
+// ── Override startProcessing to use browserGps ──
+var _origStartProcessing = startProcessing;
+startProcessing = async function() {
+  // Inject browserGps into gpsPerPhoto logic:
+  // We patch by storing browserGps on photo objects, then after processing
+  // we override lat/lng if browserGps exists
+  await _origStartProcessing();
+
+  // After processing, override GPS from browser for camera photos
+  records.forEach(function(rec) {
+    var photo = photos.find(function(p) { return p.id === rec.photoId; });
+    if (photo && photo.browserGps) {
+      rec.lat = String(photo.browserGps.lat);
+      rec.lng = String(photo.browserGps.lng);
+      // Update UI fields
+      var latInput = document.getElementById("f-lat-" + rec.id);
+      var lngInput = document.getElementById("f-lng-" + rec.id);
+      if (latInput) latInput.value = rec.lat;
+      if (lngInput) lngInput.value = rec.lng;
+    }
+  });
+};
 </script>
 </body>
 </html>
